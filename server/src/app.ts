@@ -4,18 +4,24 @@ import dotenv from "dotenv";
 import authRouter from "./routes/auth.routes";
 import errorHandler from "./middlewares/error.middleware";
 import authMiddleware from "./middlewares/auth.middleware";
+import projectRoutes from "./routes/project.routes";
+import blogRoutes from "./routes/blog.routes";
+import skillsRoutes from "./routes/skills.routes"
 dotenv.config()
 
 const app = express()
 
 const PORT = process.env.PORT || 5000;
-
-app.use(cors())
 app.use(express.json());
+app.use(cors())
+
 
 
 //health check
 app.use("/api/auth",authRouter);
+app.use("/api/projects", projectRoutes);
+app.use("/api/blogs", blogRoutes);
+app.use("/api/skills", skillsRoutes);
 app.use(errorHandler);
 app.get("/",(req:Request,res:Response)=>{
     res.send("Server is working...🥳🥳")

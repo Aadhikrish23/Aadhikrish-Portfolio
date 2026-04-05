@@ -1,5 +1,6 @@
+
 import app from "./app";
-import connectMongoose from "./lib/mongo";
+import connectMongoose from "./config/mongo";
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
