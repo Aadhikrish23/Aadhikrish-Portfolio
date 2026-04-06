@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import blogApi from "../../APIServices/blog.api";
 import type { Blog } from "../../types/blog.types";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -36,10 +38,20 @@ export default function BlogDetail() {
       <div className="text-gray-500 text-sm mb-8">
         {new Date(blog.createdAt).toDateString()}
       </div>
-
+      {blog.coverImage && (
+        <div className="h-48 overflow-hidden">
+          <img
+            src={blog.coverImage}
+            alt={blog.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition"
+          />
+        </div>
+      )}
       {/* Content */}
-      <div className="prose prose-invert max-w-none leading-relaxed">
-        {blog.content}
+      <div className="prose prose-invert prose-lg max-w-none leading-relaxed">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {blog.content}
+        </ReactMarkdown>
       </div>
     </section>
   );
