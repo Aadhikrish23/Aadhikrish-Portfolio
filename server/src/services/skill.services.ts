@@ -10,7 +10,7 @@ async function createSkill(data: any) {
 };
 
 async function getSkills() {
-  return await Skill.find().sort({ createdAt: 1 });
+  return await Skill.find().sort({ updatedAt: -1 });
 };
 
 async function updateSkill(id: string, data: any) {

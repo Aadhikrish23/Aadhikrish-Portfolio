@@ -15,7 +15,7 @@ async function createProject(data: any) {
 }
 
 async function getProjects() {
-  return await Project.find().sort({ createdAt: 1 });
+  return await Project.find().sort({ updatedAt: -1 });
 }
 
 async function getProjectById(slug: string) {
