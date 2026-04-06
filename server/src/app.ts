@@ -10,11 +10,11 @@ import skillsRoutes from "./routes/skills.routes"
 dotenv.config()
 
 const app = express()
-
+const allowedorgin = process.env.CORS_ALLOWED_ORGINS
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedorgin,
     credentials: true,
   })
 );
