@@ -2,7 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export interface ISkill extends Document {
   name: string;
-  category: "frontend" | "backend" | "tools" | "database";
+  category: "frontend" | "backend" | "tools" | "database"|"ai";
   level?: number;
 }
 
@@ -14,7 +14,7 @@ const skillSchema = new mongoose.Schema<ISkill>(
     },
     category: {
       type: String,
-      enum: ["frontend", "backend", "tools","database"],
+      enum: ["frontend", "backend", "tools","database","ai"],
       required: true,
     },
     level: {

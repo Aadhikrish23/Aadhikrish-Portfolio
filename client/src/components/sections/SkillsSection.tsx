@@ -28,7 +28,14 @@ export default function SkillsSection() {
     {} as Record<string, Skill[]>,
   );
 
-  const order = ["frontend", "backend", "database", "tools"];
+  const order = ["frontend", "backend", "ai", "database", "tools"];
+  const categoryTitles: Record<string, string> = {
+    frontend: "Frontend",
+    backend: "Backend",
+    ai: "AI / Services",
+    database: "Database",
+    tools: "Tools",
+  };
   return (
     <section className="py-28 border-t border-gray-800">
       <div className="max-w-6xl mx-auto">
@@ -44,9 +51,9 @@ export default function SkillsSection() {
                 key={category}
                 className="h-full min-h-[140px] border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition hover:-translate-y-1 hover:shadow-lg hover:shadow-white/5"
               >
-                <h3 className="text-lg font-semibold mb-4 capitalize">
-                  {category}
-                </h3>
+                <h3 className="text-lg font-semibold mb-4">
+  {categoryTitles[category]}
+</h3>
 
                 <div className="grid grid-cols-1 gap-3 py-2 ">
                   {skills.map((skill) => (
