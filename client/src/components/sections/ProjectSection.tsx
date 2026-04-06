@@ -6,7 +6,6 @@ import SectionTitle from "../common/SectionTitle";
 
 const ProjectSection = () => {
   const [projects, setProjects] = useState<Project[]>([]);
-  const featuredProjects = projects.filter((p) => p.featured);
 
   useEffect(() => {
     const fetchProjects = async () => {
