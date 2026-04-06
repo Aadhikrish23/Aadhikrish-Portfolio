@@ -8,17 +8,23 @@ const ProjectSection = () => {
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const res = await projectApi.getProjects();
-        setProjects(res.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+  const fetchProjects = async () => {
+    try {
+      const res = await projectApi.getProjects();
 
-    fetchProjects();
-  }, []);
+      // ✅ ONLY featured projects
+      const featuredProjects = res.data.filter(
+        (project: Project) => project.featured
+      );
+
+      setProjects(featuredProjects);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  fetchProjects();
+}, []);
 
   return (
     <section className="py-28 border-t border-gray-800">
