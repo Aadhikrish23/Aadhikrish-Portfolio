@@ -8,7 +8,21 @@ import remarkGfm from "remark-gfm";
 export default function BlogDetail() {
   const { slug } = useParams();
   const [blog, setBlog] = useState<Blog | null>(null);
+  const [progress, setProgress] = useState(0);
 
+  // 📊 Reading progress bar
+  useEffect(() => {
+    const handleScroll = () => {
+      const total = document.body.scrollHeight - window.innerHeight;
+      const current = window.scrollY;
+      setProgress((current / total) * 100);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // 📦 Fetch blog
   useEffect(() => {
     const fetchBlog = async () => {
       try {
@@ -23,36 +37,114 @@ export default function BlogDetail() {
     fetchBlog();
   }, [slug]);
 
-  if (!blog) return <div>Loading...</div>;
+  if (!blog) return <div className="py-20 text-center">Loading...</div>;
+
+  // ⏱️ Reading time
+  const readingTime = Math.ceil(blog.content.split(" ").length / 200);
 
   return (
-    <section className="py-28 px-6 max-w-3xl mx-auto">
-      <Link to="/blog" className="text-sm text-gray-500 hover:text-white">
-        ← Back to Blogs
-      </Link>
+    <>
+      {/* 🔥 Progress Bar */}
+      <div
+        className="fixed top-0 left-0 h-1 bg-white z-50 transition-all"
+        style={{ width: `${progress}%` }}
+      />
 
-      <h1 className="text-4xl font-bold mt-6 mb-4 leading-tight">
-        {blog.title}
-      </h1>
+      <section className="py-28 px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Back */}
+          <Link
+            to="/blog"
+            className="text-sm text-gray-500 hover:text-white"
+          >
+            ← Back to Blogs
+          </Link>
 
-      <div className="text-gray-500 text-sm mb-8">
-        {new Date(blog.createdAt).toDateString()}
-      </div>
-      {blog.coverImage && (
-        <div className="h-48 overflow-hidden">
-          <img
-            src={blog.coverImage}
-            alt={blog.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition"
-          />
+          {/* Title */}
+          <div className="mb-12 mt-6">
+            <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
+              {blog.title}
+            </h1>
+
+            <p className="text-sm text-gray-500">
+              {new Date(blog.createdAt).toDateString()} • {readingTime} min read
+            </p>
+          </div>
+
+          {/* Hero Image */}
+          {blog.coverImage && (
+            <div className="mb-16 relative">
+              <img
+                src={blog.coverImage}
+                alt={blog.title}
+                className="w-full h-[350px] md:h-[450px] object-cover rounded-2xl"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-2xl" />
+            </div>
+          )}
+
+          {/* Divider */}
+          <hr className="border-gray-800 mb-10" />
+
+          {/* Content */}
+          <div
+            className="
+              prose 
+              prose-invert 
+              prose-lg 
+              max-w-none
+
+              prose-headings:font-bold
+              prose-headings:text-white
+              prose-h2:border-l-4
+              prose-h2:border-white
+              prose-h2:pl-4
+              prose-h2:mt-10
+              prose-h2:mb-4
+
+              prose-p:text-gray-300
+              prose-li:text-gray-300
+              prose-strong:text-white
+
+              prose-a:text-blue-400
+              prose-a:no-underline
+              hover:prose-a:underline
+
+              prose-code:text-green-400
+              prose-hr:border-gray-700
+            "
+          >
+            <div className="space-y-6">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {blog.content}
+              </ReactMarkdown>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-16 p-6 border border-gray-800 rounded-xl text-center">
+            <p className="text-gray-300 mb-4">
+              Enjoyed reading this?
+            </p>
+
+            <div className="flex justify-center gap-4">
+              <Link
+                to="/projects"
+                className="px-5 py-2 bg-white text-black rounded-lg font-medium"
+              >
+                View Projects
+              </Link>
+
+              <Link
+                to="/#contact"
+                className="px-5 py-2 border border-gray-700 rounded-lg"
+              >
+                Contact Me
+              </Link>
+            </div>
+          </div>
         </div>
-      )}
-      {/* Content */}
-      <div className="prose prose-invert prose-lg max-w-none leading-relaxed">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {blog.content}
-        </ReactMarkdown>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
