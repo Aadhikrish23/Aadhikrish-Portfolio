@@ -49,11 +49,11 @@ export const getProject = async (
   next: NextFunction,
 ) => {
   try {
-    const id = req.params.id;
-    if (!id || typeof id !== "string") {
-      throw new AppError("Invalid id", 400);
+   const slug = req.params.slug;
+    if (!slug || typeof slug !== "string") {
+      throw new AppError("Invalid slug", 400);
     }
-    const data = await projectServices.getProjectById(id);
+    const data = await projectServices.getProjectById(slug);
     res.json({ success: true, data });
   } catch (error) {
     next(error);

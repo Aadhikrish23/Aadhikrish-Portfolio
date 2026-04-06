@@ -6,7 +6,7 @@ const router = express.Router();
 
 // public
 router.get("/", projectController.getProjects);
-router.get("/:id", projectController.getProject);
+router.get("/:slug", projectController.getProject);
 
 // protected
 router.post("/",authMiddleware,upload.single("image"),projectController.createProject);

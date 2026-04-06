@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export interface IProject extends Document {
   title: string;
+  slug: string;
   description: string;
   techStack: string[];
   githubUrl?: string;
@@ -15,6 +16,11 @@ const projectSchema = new mongoose.Schema<IProject>(
     title: {
       type: String,
       required: true,
+    },
+     slug: {
+      type: String,
+      required: true,
+      unique: true,
     },
     description: {
       type: String,
