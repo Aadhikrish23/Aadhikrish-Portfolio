@@ -11,6 +11,12 @@ export const createProject = async (
     const parsedBody = {
       ...req.body,
       techStack: req.body.techStack ? req.body.techStack.split(",") : [],
+      // ✅ convert string → boolean
+      featured: req.body.featured === "true",
+
+      // ✅ handle empty URL
+      githubUrl: req.body.githubUrl || undefined,
+      liveUrl: req.body.liveUrl || undefined,
     };
     const parsed = createProjectSchema.safeParse(parsedBody);
 
@@ -49,7 +55,7 @@ export const getProject = async (
   next: NextFunction,
 ) => {
   try {
-   const slug = req.params.slug;
+    const slug = req.params.slug;
     if (!slug || typeof slug !== "string") {
       throw new AppError("Invalid slug", 400);
     }
@@ -70,7 +76,27 @@ export const updateProject = async (
     if (!id || typeof id !== "string") {
       throw new AppError("Invalid id", 400);
     }
-    const data = await projectServices.updateProject(id, req.body);
+    const imageUrl = req.file?.path;
+
+    const parsedBody = {
+      ...req.body,
+
+      techStack: req.body.techStack ? req.body.techStack.split(",") : undefined,
+
+      featured:
+        req.body.featured !== undefined
+          ? req.body.featured === "true"
+          : undefined,
+
+      githubUrl: req.body.githubUrl || undefined,
+      liveUrl: req.body.liveUrl || undefined,
+    };
+
+
+    const data = await projectServices.updateProject(id, {
+      ...parsedBody,
+      ...(imageUrl && { image: imageUrl }),
+    });
     res.json({ success: true, data });
   } catch (error) {
     next(error);

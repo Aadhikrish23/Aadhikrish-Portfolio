@@ -18,7 +18,12 @@ router.post(
   blogController.createBlog
 );
 
-router.put("/:id", authMiddleware, blogController.updateBlog);
+router.put(
+  "/:id",
+  authMiddleware,
+  upload.single("coverImage"), // ✅ FIX
+  blogController.updateBlog
+);
 router.delete("/:id", authMiddleware, blogController.deleteBlog);
 
 export default router;

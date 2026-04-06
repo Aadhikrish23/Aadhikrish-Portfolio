@@ -1,6 +1,6 @@
 export interface Skill {
-  _id: string;
+  _id?: string; // ✅ optional (important)
   name: string;
-  category: "frontend" | "backend" | "tools" | "database";
-  level?: number;
+  category: string;
+  level: number;
 }

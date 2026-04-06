@@ -26,8 +26,8 @@ async function getProjectById(slug: string) {
 
 async function updateProject(id: string, data: any) {
   const project = await Project.findByIdAndUpdate(id, data, {
-    new: true,
-  });
+  returnDocument: "after",
+});
 
   if (!project) throw new AppError("Project not found", 404);
 

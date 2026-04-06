@@ -14,7 +14,9 @@ async function getSkills() {
 };
 
 async function updateSkill(id: string, data: any) {
-  const skill = await Skill.findByIdAndUpdate(id, data, { new: true });
+  const skill = await Skill.findByIdAndUpdate(id, data, {
+  returnDocument: "after",
+});
 
   if (!skill) throw new AppError("Skill not found", 404);
 

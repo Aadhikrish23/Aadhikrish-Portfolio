@@ -9,3 +9,9 @@ export interface Project {
   image?: string;
   featured: boolean;
 }
+export interface ParsedDescription  {
+  description: string;
+  problem: string;
+  solution: string;
+  features: string;
+};

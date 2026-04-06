@@ -18,7 +18,7 @@ async function createBlog(data: any){
 };
 
 async function getBlogs(){
-  return await Blog.find({ published: true }).sort({ createdAt: -1 });
+  return await Blog.find().sort({ createdAt: -1 });
 };
 
 async function getBlogBySlug(slug: string){
@@ -29,15 +29,19 @@ async function getBlogBySlug(slug: string){
   return blog;
 };
 
-async function updateBlog(id: string, data: any){
+async function updateBlog(id: string, data: any) {
+  if (data.tags && typeof data.tags === "string") {
+    data.tags = data.tags.split(",").map((t: string) => t.trim());
+  }
+
   const blog = await Blog.findByIdAndUpdate(id, data, {
-    new: true,
+    new: true, // better than returnDocument
   });
 
   if (!blog) throw new AppError("Blog not found", 404);
 
   return blog;
-};
+}
 
 async function deleteBlog(id: string){
   const blog = await Blog.findByIdAndDelete(id);

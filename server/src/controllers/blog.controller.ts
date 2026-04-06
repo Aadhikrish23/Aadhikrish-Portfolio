@@ -56,11 +56,15 @@ export const updateBlog = async (
   next: NextFunction,
 ) => {
   try {
-    const slug = req.params.slug;
-    if (!slug || typeof slug !== "string") {
-      throw new AppError("Invalid slug", 400);
-    }
-    const data = await blogServices.updateBlog(slug, req.body);
+    const id = req.params.id as string;
+
+    const coverImage = req.file?.path; // ✅ NEW
+
+    const data = await blogServices.updateBlog(id, {
+      ...req.body,
+      ...(coverImage && { coverImage }), // ✅ only if exists
+    });
+
     res.json({ success: true, data });
   } catch (error) {
     next(error);
@@ -74,10 +78,10 @@ export const deleteBlog = async (
 ) => {
   try {
     const id = req.params.id;
-     if (!id || typeof id !== "string") {
+    if (!id || typeof id !== "string") {
       throw new AppError("Invalid id", 400);
     }
-    
+
     const data = await blogServices.deleteBlog(id);
     res.json({ success: true, data });
   } catch (error) {
