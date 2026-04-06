@@ -51,6 +51,7 @@ const SkillForm = ({ initialData, onSubmit }: Props) => {
         <option value="backend">Backend</option>
         <option value="tools">Tools</option>
         <option value="database">Database</option>
+        <option value="ai">AI Services</option>
       </select>
 
       <input
