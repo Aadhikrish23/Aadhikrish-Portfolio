@@ -41,7 +41,7 @@ export default function SkillsSection() {
       <div className="max-w-6xl mx-auto">
         <SectionTitle title={"Skill"}></SectionTitle>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 ">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6 ">
           {order.map((category) => {
             const skills = groupedSkills[category];
             if (!skills) return null;
@@ -52,8 +52,8 @@ export default function SkillsSection() {
                 className="h-full min-h-[140px] border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition hover:-translate-y-1 hover:shadow-lg hover:shadow-white/5"
               >
                 <h3 className="text-lg font-semibold mb-4">
-  {categoryTitles[category]}
-</h3>
+                  {categoryTitles[category]}
+                </h3>
 
                 <div className="grid grid-cols-1 gap-3 py-2 ">
                   {skills.map((skill) => (

@@ -42,6 +42,7 @@ export const ICON_MAP: Record<string, JSX.Element> = {
   fastapi: <SiFastapi className="text-green-400" />,
   electron: <SiElectron className="text-cyan-300" />,
   openai: <SiOpenai className="text-green-300" />,
+  "openai api": <SiOpenai className="text-green-300" />,
 
   // 🔁 fallback / conceptual icons
   jwt: <FaKey className="text-yellow-400" />,          // 🔐 security
