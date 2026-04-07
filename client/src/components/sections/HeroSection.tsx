@@ -18,7 +18,7 @@ export default function HeroSection() {
                  with React, Node.js, and modern backend architectures.
                </p>
                <p className="mt-4 text-sm text-gray-500">
-                 🚀 Built AI-powered platforms • Automated enterprise workflows •
+                  Built AI-powered platforms • Automated enterprise workflows •
                  Reduced manual effort by 50%
                </p>
    
