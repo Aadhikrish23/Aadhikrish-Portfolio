@@ -10,11 +10,22 @@ import skillsRoutes from "./routes/skills.routes"
 dotenv.config()
 
 const app = express()
-const allowedorgin = process.env.CORS_ALLOWED_ORGINS
+
 app.use(express.json());
+const allowedOrigins = (process.env.CORS_ALLOWED_ORGINS || "").split(",");
+
 app.use(
   cors({
-    origin: allowedorgin,
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps, curl)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
