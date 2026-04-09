@@ -37,6 +37,9 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/skills", skillsRoutes);
 app.use(errorHandler);
+
+
+// health check urls
 app.get("/",(req:Request,res:Response)=>{
     res.send("Server is working...🥳🥳")
 })
@@ -44,6 +47,13 @@ app.get("/api/test", authMiddleware, (req, res) => {
   res.json({
     message: "Protected route working",
     user: req.user,
+  });
+});
+
+app.get("/api/health", (req: Request, res: Response) => {
+  res.status(200).json({
+    status: "OK",
+    message: "Server is ready",
   });
 });
 
