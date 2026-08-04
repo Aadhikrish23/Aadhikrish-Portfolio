@@ -4,6 +4,7 @@ export interface ISkill extends Document {
   name: string;
   category: "frontend" | "backend" | "tools" | "database"|"ai";
   level?: number;
+  iconUrl?: string;
 }
 
 const skillSchema = new mongoose.Schema<ISkill>(
@@ -21,6 +22,9 @@ const skillSchema = new mongoose.Schema<ISkill>(
       type: Number,
       min: 1,
       max: 10,
+    },
+    iconUrl: {
+      type: String,
     },
   },
   { timestamps: true }

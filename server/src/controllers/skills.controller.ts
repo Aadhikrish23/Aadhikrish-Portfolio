@@ -1,6 +1,24 @@
 import { Request, Response, NextFunction } from "express";
 import skillServices from "../services/skill.services";
 import AppError from "../utils/AppError";
+
+export const uploadSkillIcon = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.file) {
+      throw new AppError("No file uploaded", 400);
+    }
+    const file = req.file as any;
+    const iconUrl = file.path || file.secure_url;
+    res.status(200).json({ success: true, data: { iconUrl } });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createSkill = async (
   req: Request,
   res: Response,

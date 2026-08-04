@@ -22,4 +22,13 @@ const deleteSkill = async (id: string) => {
   return res.data;
 };
 
-export default { getSkills, createSkill, updateSkill, deleteSkill };
+const uploadSkillIcon = async (file: File): Promise<string> => {
+  const fd = new FormData();
+  fd.append("icon", file);
+  const res = await apiClient.post("/skills/upload-icon", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.data.iconUrl;
+};
+
+export default { getSkills, createSkill, updateSkill, deleteSkill, uploadSkillIcon };

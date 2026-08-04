@@ -1,14 +1,37 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import type { ParsedDescription, Project } from "../../types/project.types";
 import skillsApi from "../../APIServices/skills.api";
 import type { Skill } from "../../types/skills.types";
-import { FaCode, FaTimes, FaChevronDown } from "react-icons/fa";
+import SkillIcon from "../common/SkillIcon";
+import { FaImage, FaCheck, FaGithub, FaExternalLinkAlt } from "react-icons/fa";
 
 interface Props {
   initialData?: Partial<Project>;
   onSubmit: (data: FormData) => Promise<void>;
   loading: boolean;
 }
+
+const parseDescription = (desc: string) => {
+  const lines = desc.split("\n");
+  let description = "";
+  let problem = "";
+  let solution = "";
+  const features: string[] = [];
+
+  lines.forEach((line) => {
+    if (line.startsWith("Problem:")) {
+      problem = line.replace("Problem:", "").trim();
+    } else if (line.startsWith("Solution:")) {
+      solution = line.replace("Solution:", "").trim();
+    } else if (line.startsWith("•")) {
+      features.push(line.replace("•", "").trim());
+    } else if (!["Key Features:", "Problem:", "Solution:"].some((p) => line.startsWith(p))) {
+      description += line + "\n";
+    }
+  });
+
+  return { description: description.trim(), problem, solution, features: features.join(", ") };
+};
 
 const ProjectForm = ({ initialData, onSubmit, loading }: Props) => {
   const [form, setForm] = useState({
@@ -24,120 +47,18 @@ const ProjectForm = ({ initialData, onSubmit, loading }: Props) => {
   });
 
   const [image, setImage] = useState<File | null>(null);
-  
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const loadSkills = async () => {
-      try {
-        const res = await skillsApi.getSkills();
-        setAvailableSkills(res.data);
-      } catch (err) {
-        console.error("Failed to load skills", err);
-      }
-    };
-    loadSkills();
+    skillsApi.getSkills().then((res) => setAvailableSkills(res.data)).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // 🔹 Handle input change
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target;
-
-    setForm({
-      ...form,
-      [name]:
-        type === "checkbox"
-          ? (e.target as HTMLInputElement).checked
-          : value,
-    });
-  };
-
-  const handleSkillToggle = (skillName: string) => {
-    setForm(prev => {
-      const isSelected = prev.techStack.includes(skillName);
-      if (isSelected) {
-        return { ...prev, techStack: prev.techStack.filter(s => s !== skillName) };
-      } else {
-        return { ...prev, techStack: [...prev.techStack, skillName] };
-      }
-    });
-  };
-
-  // 🔹 Combine fields into ONE description string
-  const buildDescription = () => {
-    return `
-${form.description}
-
-Problem: ${form.problem}
-
-Solution: ${form.solution}
-
-Key Features:
-${form.features
-  .split(",")
-  .map((f) => `• ${f.trim()}`)
-  .join("\n")}
-    `.trim();
-  };
-
-  // 🔹 Parse description back (for edit)
- const parseDescription = (desc: string): ParsedDescription => {
-    const lines = desc.split("\n");
-
-    let description = "";
-    let problem = "";
-    let solution = "";
-    let features: string[] = [];
-
-    lines.forEach((line) => {
-      if (line.startsWith("Problem:")) {
-        problem = line.replace("Problem:", "").trim();
-      } else if (line.startsWith("Solution:")) {
-        solution = line.replace("Solution:", "").trim();
-      } else if (line.startsWith("•")) {
-        features.push(line.replace("•", "").trim());
-      } else if (
-        !line.startsWith("Key Features:") &&
-        !line.startsWith("Problem:") &&
-        !line.startsWith("Solution:")
-      ) {
-        description += line + "\n";
-      }
-    });
-
-    return {
-      description: description.trim(),
-      problem,
-      solution,
-      features: features.join(", "),
-    };
-  };
-
-  // 🔹 Prefill form when editing
   useEffect(() => {
     if (initialData) {
-    const parsed: ParsedDescription = initialData.description
-  ? parseDescription(initialData.description)
-  : {
-      description: "",
-      problem: "",
-      solution: "",
-      features: "",
-    };
+      const parsed = initialData.description
+        ? parseDescription(initialData.description)
+        : { description: "", problem: "", solution: "", features: "" };
 
       setForm({
         title: initialData.title || "",
@@ -145,203 +66,242 @@ ${form.features
         githubUrl: initialData.githubUrl || "",
         liveUrl: initialData.liveUrl || "",
         featured: initialData.featured || false,
-        description: parsed.description || "",
-        problem: parsed.problem || "",
-        solution: parsed.solution || "",
-        features: parsed.features || "",
+        description: parsed.description,
+        problem: parsed.problem,
+        solution: parsed.solution,
+        features: parsed.features,
       });
+
+      if (initialData.image) setImagePreview(initialData.image);
     }
   }, [initialData]);
 
-  // 🔹 Submit handler
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setForm({ ...form, [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImage(file);
+    if (file) setImagePreview(URL.createObjectURL(file));
+  };
+
+  const toggleSkill = (name: string) => {
+    setForm((prev) => ({
+      ...prev,
+      techStack: prev.techStack.includes(name)
+        ? prev.techStack.filter((s) => s !== name)
+        : [...prev.techStack, name],
+    }));
+  };
+
+  const buildDescription = () =>
+    `${form.description}\n\nProblem: ${form.problem}\n\nSolution: ${form.solution}\n\nKey Features:\n${form.features
+      .split(",")
+      .map((f) => `• ${f.trim()}`)
+      .join("\n")}`.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const formData = new FormData();
-
-    formData.append("title", form.title);
-    formData.append("description", buildDescription());
-    formData.append("techStack", form.techStack.join(","));
-    formData.append("githubUrl", form.githubUrl);
-    formData.append("liveUrl", form.liveUrl);
-    formData.append("featured", String(form.featured));
-
-    if (image) {
-      formData.append("image", image);
-    }
-
-    await onSubmit(formData);
+    const fd = new FormData();
+    fd.append("title", form.title);
+    fd.append("description", buildDescription());
+    fd.append("techStack", form.techStack.join(","));
+    fd.append("githubUrl", form.githubUrl);
+    fd.append("liveUrl", form.liveUrl);
+    fd.append("featured", String(form.featured));
+    if (image) fd.append("image", image);
+    await onSubmit(fd);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4">
-      
+    <form onSubmit={handleSubmit} className="space-y-5">
+
+      {/* Title */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Project Title</label>
+        <label className="block text-sm font-semibold text-slate-700">Project Title</label>
         <input
           name="title"
           placeholder="e.g. E-Commerce Platform"
           value={form.title}
           onChange={handleChange}
-          className="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+          required
+          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
         />
       </div>
 
+      {/* Description */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Short Description</label>
+        <label className="block text-sm font-semibold text-slate-700">Short Description</label>
         <textarea
           name="description"
           placeholder="Brief overview of the project..."
           value={form.description}
           onChange={handleChange}
-          className="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
           rows={3}
+          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 resize-none"
         />
       </div>
 
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Problem</label>
-        <textarea
-          name="problem"
-          placeholder="What problem does this solve?"
-          value={form.problem}
-          onChange={handleChange}
-          className="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-          rows={2}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Solution</label>
-        <textarea
-          name="solution"
-          placeholder="How did you solve it?"
-          value={form.solution}
-          onChange={handleChange}
-          className="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-          rows={2}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Features (comma separated)</label>
-        <textarea
-          name="features"
-          placeholder="User Auth, Payment Gateway, Real-time Chat..."
-          value={form.features}
-          onChange={handleChange}
-          className="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-          rows={2}
-        />
-      </div>
-
-      <div className="space-y-1" ref={dropdownRef}>
-        <label className="text-sm font-medium text-slate-700">Tech Stack (Pick Skills)</label>
-        <div className="relative">
-          <div 
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-full min-h-[44px] border border-slate-300 p-2 rounded-lg cursor-pointer flex flex-wrap gap-2 items-center bg-white justify-between hover:border-blue-400 transition-colors"
-          >
-            <div className="flex flex-wrap gap-2 flex-1">
-              {form.techStack.length > 0 ? (
-                form.techStack.map((tech) => (
-                  <span key={tech} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium">
-                    {tech}
-                    <button 
-                      type="button" 
-                      onClick={(e) => { e.stopPropagation(); handleSkillToggle(tech); }}
-                      className="text-blue-400 hover:text-blue-800 transition-colors"
-                    >
-                      <FaTimes className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))
-              ) : (
-                <span className="text-slate-400">Select skills...</span>
-              )}
-            </div>
-            <FaChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-          </div>
-
-          {isDropdownOpen && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto py-1">
-              {availableSkills.length > 0 ? (
-                availableSkills.map((skill) => (
-                  <label 
-                    key={skill._id || skill.name} 
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.techStack.includes(skill.name)}
-                      onChange={() => handleSkillToggle(skill.name)}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-slate-700 font-medium">{skill.name}</span>
-                    <span className="text-xs text-slate-400 ml-auto capitalize">{skill.category}</span>
-                  </label>
-                ))
-              ) : (
-                <div className="p-4 text-center text-slate-500 text-sm">
-                  No skills found. Please add skills in the Skills tab first.
-                </div>
-              )}
-            </div>
-          )}
+      {/* Problem / Solution in 2 cols */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className="block text-sm font-semibold text-slate-700">Problem</label>
+          <textarea
+            name="problem"
+            placeholder="What problem did you solve?"
+            value={form.problem}
+            onChange={handleChange}
+            rows={3}
+            className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 resize-none"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="block text-sm font-semibold text-slate-700">Solution</label>
+          <textarea
+            name="solution"
+            placeholder="How did you solve it?"
+            value={form.solution}
+            onChange={handleChange}
+            rows={3}
+            className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 resize-none"
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Features */}
+      <div className="space-y-1">
+        <label className="block text-sm font-semibold text-slate-700">
+          Key Features{" "}
+          <span className="text-xs font-normal text-slate-400">comma separated</span>
+        </label>
+        <input
+          name="features"
+          placeholder="User Auth, Real-time Chat, Payment Gateway..."
+          value={form.features}
+          onChange={handleChange}
+          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
+        />
+      </div>
+
+      {/* Tech Stack Badge Picker */}
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-slate-700">Tech Stack</label>
+        {availableSkills.length === 0 ? (
+          <p className="text-sm text-slate-400 italic">
+            No skills added yet — go to the Skills tab and add some first.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 min-h-[60px]">
+            {availableSkills.map((skill) => {
+              const selected = form.techStack.includes(skill.name);
+              return (
+                <button
+                  key={skill._id || skill.name}
+                  type="button"
+                  onClick={() => toggleSkill(skill.name)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition-all duration-200 select-none
+                    ${selected
+                      ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200 scale-105"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                    }`}
+                >
+                  <SkillIcon
+                    name={skill.name}
+                    iconUrl={skill.iconUrl}
+                    className={`w-4 h-4 rounded-sm ${selected ? "brightness-0 invert" : ""}`}
+                  />
+                  {skill.name}
+                  {selected && <FaCheck className="w-3 h-3 ml-0.5" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {form.techStack.length > 0 && (
+          <p className="text-xs text-slate-500 mt-1">
+            Selected: {form.techStack.join(", ")}
+          </p>
+        )}
+      </div>
+
+      {/* GitHub + Live URL */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">GitHub URL</label>
+          <label className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+            <FaGithub className="w-4 h-4" /> GitHub URL
+          </label>
           <input
             name="githubUrl"
             placeholder="https://github.com/..."
             value={form.githubUrl}
             onChange={handleChange}
-            className="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
           />
         </div>
-
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Live URL</label>
+          <label className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+            <FaExternalLinkAlt className="w-3.5 h-3.5" /> Live URL
+          </label>
           <input
             name="liveUrl"
             placeholder="https://..."
             value={form.liveUrl}
             onChange={handleChange}
-            className="w-full border border-slate-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-4 py-2">
-        <label className="flex items-center gap-2 cursor-pointer group">
-          <div className="relative flex items-center">
-            <input
-              type="checkbox"
-              name="featured"
-              checked={form.featured}
-              onChange={handleChange}
-              className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-colors"
-            />
+      {/* Project Image */}
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-slate-700">Project Screenshot</label>
+        {imagePreview ? (
+          <div className="relative rounded-xl overflow-hidden border border-slate-200 group">
+            <img src={imagePreview} alt="Preview" className="w-full h-44 object-cover" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <label className="cursor-pointer px-4 py-2 bg-white/90 rounded-lg text-sm font-medium text-slate-700 hover:bg-white transition-colors">
+                Change Image
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+              </label>
+            </div>
           </div>
-          <span className="text-slate-700 font-medium group-hover:text-blue-600 transition-colors">Featured Project</span>
-        </label>
+        ) : (
+          <label className="flex flex-col items-center gap-2 px-4 py-8 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
+            <FaImage className="w-8 h-8 text-slate-300 group-hover:text-blue-400 transition-colors" />
+            <span className="text-sm text-slate-400 group-hover:text-blue-500 transition-colors">
+              Click to upload a project screenshot
+            </span>
+            <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+          </label>
+        )}
       </div>
 
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Project Image</label>
-        <input
-          type="file"
-          onChange={(e) => setImage(e.target.files?.[0] || null)}
-          className="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer"
-        />
+      {/* Featured Toggle */}
+      <div
+        onClick={() => setForm((f) => ({ ...f, featured: !f.featured }))}
+        className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
+          form.featured
+            ? "bg-amber-50 border-amber-300"
+            : "bg-slate-50 border-slate-200 hover:border-slate-300"
+        }`}
+      >
+        <div>
+          <p className="text-sm font-semibold text-slate-700">Featured Project</p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {form.featured ? "This project will be highlighted on your homepage." : "Not shown on homepage."}
+          </p>
+        </div>
+        <div className={`w-10 h-6 rounded-full relative transition-all ${form.featured ? "bg-amber-400" : "bg-slate-300"}`}>
+          <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${form.featured ? "left-4.5 translate-x-0.5" : "left-0.5"}`} />
+        </div>
       </div>
 
-      <button 
-        className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:transform-none"
+      <button
+        type="submit"
         disabled={loading}
+        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-70 text-white font-bold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
       >
         {loading ? "Saving Project..." : "Save Project"}
       </button>

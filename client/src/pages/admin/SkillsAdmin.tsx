@@ -65,7 +65,7 @@ const SkillsAdmin = () => {
             <div key={s._id} className="flex justify-between items-center p-5 hover:bg-slate-50/80 transition-colors group">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
-                  <SkillIcon name={s.name} className="w-7 h-7" />
+                  <SkillIcon name={s.name} iconUrl={s.iconUrl} className="w-7 h-7" />
                 </div>
                 <div>
                   <p className="font-semibold text-slate-800 text-lg">{s.name}</p>
