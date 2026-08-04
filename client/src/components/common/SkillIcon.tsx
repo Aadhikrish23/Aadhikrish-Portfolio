@@ -3,25 +3,8 @@ import { useState } from 'react';
 interface SkillIconProps {
   name: string;
   className?: string;
-  iconUrl?: string; // custom uploaded icon
+  iconUrl?: string;
 }
-
-// Gradient palettes for fallback badges — deterministic by first char
-const GRADIENTS = [
-  "from-blue-500 to-indigo-600",
-  "from-purple-500 to-pink-600",
-  "from-emerald-500 to-teal-600",
-  "from-orange-500 to-red-600",
-  "from-amber-500 to-yellow-600",
-  "from-cyan-500 to-blue-600",
-  "from-rose-500 to-pink-600",
-  "from-violet-500 to-purple-600",
-];
-
-const getGradient = (name: string) => {
-  const idx = (name.charCodeAt(0) || 0) % GRADIENTS.length;
-  return GRADIENTS[idx];
-};
 
 const exactMappings: Record<string, string> = {
   "node.js": "nodejs",
@@ -35,28 +18,28 @@ const exactMappings: Record<string, string> = {
   "tailwindcss": "tailwindcss",
   "mongo": "mongodb",
   "postgres": "postgresql",
-  "vite": "vite",
   "typescript": "ts",
   "javascript": "js",
 };
 
-// Skills that skillicons.dev doesn't support — skip straight to fallback
+// Skills that skillicons.dev doesn't have — skip the img request, go straight to fallback
 const UNSUPPORTED = new Set([
-  "openai", "ollama", "chatgpt", "langchain", "api",
-  "rest api", "graphql", "supabase", "vercel",
+  "openai", "ollama", "chatgpt", "langchain", "rest api",
+  "api", "supabase", "vercel", "gemini",
 ]);
 
 const SkillIcon = ({ name, className = "w-6 h-6", iconUrl }: SkillIconProps) => {
-  const [imgError, setImgError] = useState(false);
+  const [skillIconError, setSkillIconError] = useState(false);
+  const [customIconError, setCustomIconError] = useState(false);
 
-  // 1. Custom uploaded icon always wins
-  if (iconUrl && !imgError) {
+  // 1. Custom uploaded icon wins
+  if (iconUrl && !customIconError) {
     return (
       <img
         src={iconUrl}
         alt={name}
-        className={className}
-        onError={() => setImgError(true)}
+        className={`${className} object-contain`}
+        onError={() => setCustomIconError(true)}
       />
     );
   }
@@ -66,27 +49,29 @@ const SkillIcon = ({ name, className = "w-6 h-6", iconUrl }: SkillIconProps) => 
   const isUnsupported = UNSUPPORTED.has(cleanName) || !formattedName;
 
   // 2. skillicons.dev
-  if (!isUnsupported && !imgError) {
+  if (!isUnsupported && !skillIconError) {
     return (
       <img
         src={`https://skillicons.dev/icons?i=${formattedName}`}
         alt={name}
-        className={className}
-        onError={() => setImgError(true)}
+        className={`${className} object-contain`}
+        onError={() => setSkillIconError(true)}
       />
     );
   }
 
-  // 3. Gradient initial fallback
-  const initial = (name[0] || "?").toUpperCase();
-  const gradient = getGradient(name);
+  // 3. Clean text fallback — abbreviation in a rounded box
+  const abbr = name.length <= 2
+    ? name.toUpperCase()
+    : name.substring(0, 2).toUpperCase();
 
   return (
     <div
-      className={`${className} flex items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-white font-bold select-none shadow-sm`}
+      className={`${className} flex items-center justify-center rounded-md bg-slate-100 border border-slate-200 text-slate-600 font-bold select-none`}
       title={name}
+      style={{ fontSize: 'clamp(8px, 35%, 13px)', letterSpacing: '0.02em' }}
     >
-      <span className="text-[55%] leading-none">{initial}</span>
+      {abbr}
     </div>
   );
 };
