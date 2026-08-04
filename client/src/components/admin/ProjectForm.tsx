@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ParsedDescription, Project } from "../../types/project.types";
+import type { Project } from "../../types/project.types";
 import skillsApi from "../../APIServices/skills.api";
 import type { Skill } from "../../types/skills.types";
 import SkillIcon from "../common/SkillIcon";
