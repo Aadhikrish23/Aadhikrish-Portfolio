@@ -2,7 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import projectApi from "../../APIServices/project.api";
 import type { Project } from "../../types/project.types";
-import { getIcon } from "../../utils/skilliconmapper";
+import SkillIcon from "../../components/common/SkillIcon";
 
 const ProjectDetail = () => {
   const { slug } = useParams();
@@ -91,7 +91,9 @@ const ProjectDetail = () => {
               key={i}
               className="flex items-center justify-start gap-2 px-3 py-2 border border-gray-700 rounded-lg text-sm hover:border-gray-500 hover:bg-white/5 transition "
             >
-              <span className="flex-shrink-0">{getIcon(tech)}</span>
+              <span className="flex-shrink-0 flex items-center justify-center">
+                <SkillIcon name={tech} className="w-5 h-5" />
+              </span>
               <span>{tech}</span>
             </span>
           ))}
@@ -113,12 +115,9 @@ const ProjectDetail = () => {
             <a
               href={project.githubUrl}
               target="_blank"
-              className="px-5 py-2 flex items-center gap-2 rounded-lg 
-  bg-white/5 border border-gray-700 
-  hover:bg-white/10 hover:border-gray-500 
-  hover:-translate-y-0.5 transition-all"
+              className="px-5 py-2 flex items-center gap-2 rounded-lg bg-white/5 border border-gray-700 hover:bg-white/10 hover:border-gray-500 hover:-translate-y-0.5 transition-all"
             >
-              {getIcon("GitHub")}GitHub
+              <SkillIcon name="github" className="w-5 h-5" /> GitHub
             </a>
           )}
         </div>
