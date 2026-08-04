@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Skill } from "../../types/skills.types";
+import SkillIcon from "../common/SkillIcon";
 
 interface Props {
   initialData?: Skill;
@@ -36,11 +37,20 @@ const SkillForm = ({ initialData, onSubmit }: Props) => {
       }}
       className="grid gap-4"
     >
-      <input
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-        className="border p-3 rounded"
-      />
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <label className="block text-sm text-gray-600 mb-1">Skill Name</label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="border p-3 rounded w-full"
+            placeholder="e.g. React, Node.js, Python"
+          />
+        </div>
+        <div className="flex flex-col items-center justify-center w-16 pt-5">
+           <SkillIcon name={form.name || "unknown"} className="w-8 h-8" />
+        </div>
+      </div>
 
       <select
         value={form.category}

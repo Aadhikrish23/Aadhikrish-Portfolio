@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import skillsApi from "../../APIServices/skills.api";
 import type { Skill } from "../../types/skills.types";
 import SectionTitle from "../common/SectionTitle";
-import { getIcon } from "../../utils/skilliconmapper";
+import SkillIcon from "../common/SkillIcon";
 export default function SkillsSection() {
   const [skills, setSkills] = useState<Skill[]>([]);
 
@@ -59,10 +59,10 @@ export default function SkillsSection() {
                   {skills.map((skill) => (
                     <div
                       key={skill._id}
-                      className="flex items-center justify-start gap-2 px-3 py-2 border border-gray-700 rounded-lg text-sm hover:border-gray-500 hover:bg-white/5 transition "
+                      className="flex items-center justify-start gap-3 px-3 py-2 border border-gray-700 rounded-lg text-sm hover:border-gray-500 hover:bg-white/5 transition "
                     >
-                      <span className="flex-shrink-0">
-                        {getIcon(skill.name)}
+                      <span className="flex-shrink-0 flex items-center justify-center">
+                        <SkillIcon name={skill.name} className="w-6 h-6" />
                       </span>
                       <span>{skill.name}</span>
                     </div>
