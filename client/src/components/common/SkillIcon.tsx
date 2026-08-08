@@ -20,19 +20,32 @@ const exactMappings: Record<string, string> = {
   "postgres": "postgresql",
   "typescript": "ts",
   "javascript": "js",
+  "python": "py",
+  "vscode": "vscode",
+  "figma": "figma",
+  "git": "git",
+  "github": "github",
+  "docker": "docker",
+  "linux": "linux",
+  "aws": "aws",
 };
 
-// Skills that skillicons.dev doesn't have — skip the img request, go straight to fallback
-const UNSUPPORTED = new Set([
-  "openai", "ollama", "chatgpt", "langchain", "rest api",
-  "api", "supabase", "vercel", "gemini",
-]);
+// Skills that skillicons.dev doesn't support — checked by prefix/contains match below
+const UNSUPPORTED_KEYWORDS = [
+  "openai", "ollama", "chatgpt", "langchain",
+  "gemini", "claude", "anthropic", "rest", "api",
+];
+
+const isUnsupportedName = (name: string): boolean => {
+  const lower = name.toLowerCase();
+  return UNSUPPORTED_KEYWORDS.some((kw) => lower.includes(kw));
+};
 
 const SkillIcon = ({ name, className = "w-6 h-6", iconUrl }: SkillIconProps) => {
   const [skillIconError, setSkillIconError] = useState(false);
   const [customIconError, setCustomIconError] = useState(false);
 
-  // 1. Custom uploaded icon wins
+  // 1. Custom uploaded icon always wins
   if (iconUrl && !customIconError) {
     return (
       <img
@@ -46,9 +59,9 @@ const SkillIcon = ({ name, className = "w-6 h-6", iconUrl }: SkillIconProps) => 
 
   const cleanName = name.toLowerCase().trim();
   const formattedName = exactMappings[cleanName] ?? cleanName.replace(/[^a-z0-9]/g, '');
-  const isUnsupported = UNSUPPORTED.has(cleanName) || !formattedName;
+  const isUnsupported = isUnsupportedName(name) || !formattedName;
 
-  // 2. skillicons.dev
+  // 2. Try skillicons.dev
   if (!isUnsupported && !skillIconError) {
     return (
       <img
@@ -60,16 +73,23 @@ const SkillIcon = ({ name, className = "w-6 h-6", iconUrl }: SkillIconProps) => 
     );
   }
 
-  // 3. Clean text fallback — abbreviation in a rounded box
-  const abbr = name.length <= 2
-    ? name.toUpperCase()
-    : name.substring(0, 2).toUpperCase();
+  // 3. Abbreviation fallback — works on both dark and light backgrounds
+  const abbr = name.trim().length <= 2
+    ? name.trim().toUpperCase()
+    : name.trim().substring(0, 2).toUpperCase();
 
   return (
     <div
-      className={`${className} flex items-center justify-center rounded-md bg-slate-100 border border-slate-200 text-slate-600 font-bold select-none`}
+      className={`${className} flex items-center justify-center rounded-md font-bold select-none`}
       title={name}
-      style={{ fontSize: 'clamp(8px, 35%, 13px)', letterSpacing: '0.02em' }}
+      style={{
+        fontSize: 'clamp(9px, 38%, 14px)',
+        letterSpacing: '0.03em',
+        // Neutral look that works on dark portfolio and light admin
+        background: 'rgba(128,128,128,0.18)',
+        border: '1px solid rgba(128,128,128,0.35)',
+        color: 'inherit',
+      }}
     >
       {abbr}
     </div>

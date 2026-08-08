@@ -62,7 +62,7 @@ export default function SkillsSection() {
                       className="flex items-center justify-start gap-3 px-3 py-2 border border-gray-700 rounded-lg text-sm hover:border-gray-500 hover:bg-white/5 transition "
                     >
                       <span className="flex-shrink-0 flex items-center justify-center">
-                        <SkillIcon name={skill.name} className="w-6 h-6" />
+                        <SkillIcon name={skill.name} iconUrl={skill.iconUrl} className="w-6 h-6" />
                       </span>
                       <span>{skill.name}</span>
                     </div>
