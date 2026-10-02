@@ -26,7 +26,7 @@ export const getBlogs = async (
   next: NextFunction,
 ) => {
   try {
-    const data = await blogServices.getBlogs();
+    const data = await blogServices.getBlogs(!!req.user);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
@@ -43,7 +43,7 @@ export const getBlog = async (
     if (!slug || typeof slug !== "string") {
       throw new AppError("Invalid slug", 400);
     }
-    const data = await blogServices.getBlogBySlug(slug);
+    const data = await blogServices.getBlogBySlug(slug, !!req.user);
     res.json({ success: true, data });
   } catch (error) {
     next(error);

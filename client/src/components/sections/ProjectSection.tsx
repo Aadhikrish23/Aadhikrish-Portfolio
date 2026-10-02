@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import projectApi from "../../APIServices/project.api";
 import type { Project } from "../../types/project.types";
 import ProjectCard from "../common/ProjectCard";
@@ -38,12 +39,12 @@ const ProjectSection = () => {
         </div>
       </div>
       <div className="mt-10 text-center">
-        <a
-          href="/projects"
+        <Link
+          to="/projects"
           className="px-6 py-3 border border-gray-700 rounded-lg hover:border-white transition"
         >
           View All Projects
-        </a>
+        </Link>
       </div>
     </section>
   );

@@ -8,6 +8,12 @@ const registerUser = async (
   next: NextFunction,
 ) => {
   try {
+    // Public sign-up is disabled unless explicitly enabled (e.g. to bootstrap the first admin).
+    if (process.env.ALLOW_SIGNUP !== "true") {
+      next(new AppError("Sign-up is disabled", 403));
+      return;
+    }
+
     let username = req.body.username;
     let password = req.body.password;
     let email = req.body.email;

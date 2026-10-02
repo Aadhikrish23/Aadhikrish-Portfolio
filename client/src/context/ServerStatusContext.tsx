@@ -1,19 +1,28 @@
-import { createContext,useContext,useState,useEffect, useRef } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import healthcheckApi from "../APIServices/healthcheck.api";
 type ServerContextType = {
   serverReady: boolean;
   connected: boolean;
+  failed: boolean;
+  retry: () => void;
 };
 
-const serverContext = createContext<ServerContextType| null>(null);
+const MAX_ATTEMPTS = 20;
 
-export const ServerProvider = ({children}:{children:React.ReactNode})=>{
-     const [serverReady, setServerReady] = useState(false);
+const serverContext = createContext<ServerContextType | null>(null);
+
+export const ServerProvider = ({ children }: { children: React.ReactNode }) => {
+  const [serverReady, setServerReady] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [failed, setFailed] = useState(false);
 
-  const attemptsRef = useRef(0); 
+  // Bumping this restarts the polling loop after it has given up.
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     const healthcheck = async () => {
       try {
         const res = await healthcheckApi.healthCheck();
@@ -21,32 +30,35 @@ export const ServerProvider = ({children}:{children:React.ReactNode})=>{
         if (res.data.status === "OK") {
           setConnected(true);
 
-          setTimeout(() => {
-            setServerReady(true); 
+          timer = setTimeout(() => {
+            setServerReady(true);
           }, 1000);
-        } else {
-          retry();
+          return;
         }
-      } catch (error) {
-        retry();
+      } catch {
+        // fall through to retry
       }
-    };
 
-    const retry = () => {
-      attemptsRef.current++;
-
-      if (attemptsRef.current < 20) {
-        setTimeout(healthcheck, 2000);
+      attempts++;
+      if (attempts < MAX_ATTEMPTS) {
+        timer = setTimeout(healthcheck, 2000);
+      } else {
+        setFailed(true);
       }
     };
 
     healthcheck();
-  }, []);
+    return () => clearTimeout(timer);
+  }, [retryKey]);
 
+  const retry = () => {
+    setFailed(false);
+    setRetryKey((k) => k + 1);
+  };
 
   return (
     <serverContext.Provider
-    value={{serverReady,connected}}>
+    value={{ serverReady, connected, failed, retry }}>
         {children}
     </serverContext.Provider>
   )

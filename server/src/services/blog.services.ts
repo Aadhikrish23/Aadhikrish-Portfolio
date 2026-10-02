@@ -2,6 +2,20 @@ import Blog from "../models/blog.model.js";
 import AppError from "../utils/AppError.js";
 import { generateSlug } from "../utils/slug.js";
 
+// FormData sends tags as "a, b" and published as "true"/"false"
+function normalizeBlogInput(data: any) {
+  if (typeof data.tags === "string") {
+    data.tags = data.tags
+      .split(",")
+      .map((t: string) => t.trim())
+      .filter(Boolean);
+  }
+  if (typeof data.published === "string") {
+    data.published = data.published === "true";
+  }
+  return data;
+}
+
 async function createBlog(data: any){
   if (!data.title || !data.content) {
     throw new AppError("Title and content required", 400);
@@ -10,19 +24,21 @@ async function createBlog(data: any){
   const slug = generateSlug(data.title);
 
   const blog = await Blog.create({
-    ...data,
+    ...normalizeBlogInput(data),
     slug,
   });
 
   return blog;
 };
 
-async function getBlogs(){
-  return await Blog.find().sort({ createdAt: -1 });
+async function getBlogs(includeDrafts = false){
+  const filter = includeDrafts ? {} : { published: true };
+  return await Blog.find(filter).sort({ createdAt: -1 });
 };
 
-async function getBlogBySlug(slug: string){
-  const blog = await Blog.findOne({ slug });
+async function getBlogBySlug(slug: string, includeDrafts = false){
+  const filter = includeDrafts ? { slug } : { slug, published: true };
+  const blog = await Blog.findOne(filter);
 
   if (!blog) throw new AppError("Blog not found", 404);
 
@@ -30,11 +46,7 @@ async function getBlogBySlug(slug: string){
 };
 
 async function updateBlog(id: string, data: any) {
-  if (data.tags && typeof data.tags === "string") {
-    data.tags = data.tags.split(",").map((t: string) => t.trim());
-  }
-
-  const blog = await Blog.findByIdAndUpdate(id, data, {
+  const blog = await Blog.findByIdAndUpdate(id, normalizeBlogInput(data), {
     new: true, // better than returnDocument
   });
 

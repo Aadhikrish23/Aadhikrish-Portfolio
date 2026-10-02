@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 
 export default function HeroSection() {
   return (
@@ -23,12 +24,12 @@ export default function HeroSection() {
                </p>
    
                <div className="mt-8 flex gap-4">
-                 <a
-                   href="/projects"
+                 <Link
+                   to="/projects"
                    className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:opacity-90 transition"
                  >
                    View Projects
-                 </a>
+                 </Link>
    
                  <a
                    href="#contact"

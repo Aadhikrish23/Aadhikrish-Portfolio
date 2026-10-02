@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import projectServices from "../services/project.services";
 import AppError from "../utils/AppError";
-import { createProjectSchema } from "../validators/project.validator";
+import {
+  createProjectSchema,
+  updateProjectSchema,
+} from "../validators/project.validator";
 export const createProject = async (
   req: Request,
   res: Response,
@@ -91,10 +94,14 @@ export const updateProject = async (
       githubUrl: req.body.githubUrl || undefined,
       liveUrl: req.body.liveUrl || undefined,
     };
+    const parsed = updateProjectSchema.safeParse(parsedBody);
 
+    if (!parsed.success) {
+      throw new AppError(parsed.error.message, 400);
+    }
 
     const data = await projectServices.updateProject(id, {
-      ...parsedBody,
+      ...parsed.data,
       ...(imageUrl && { image: imageUrl }),
     });
     res.json({ success: true, data });

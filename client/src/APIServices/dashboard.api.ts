@@ -11,7 +11,7 @@ const getDashboardStats = async () => {
 
   return {
     projects: projects.data.length,
-    blogs: blogs.data.length,
+    blogs: blogs.data.filter((b) => b.published).length,
     skills: skills.data.length,
   };
 };

@@ -9,3 +9,5 @@ export const createProjectSchema = z.object({
   image: z.string().optional(),
   featured: z.boolean().optional(),
 });
+
+export const updateProjectSchema = createProjectSchema.partial();

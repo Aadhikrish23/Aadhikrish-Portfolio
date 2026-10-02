@@ -3,6 +3,7 @@ import blogApi from "../../APIServices/blog.api";
 import SectionTitle from "../common/SectionTitle";
 import { Link } from "react-router-dom";
 import type { Blog } from "../../types/blog.types";
+import { stripMarkdown } from "../../utils/markdown";
 
 export default function BlogSection() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -25,7 +26,7 @@ export default function BlogSection() {
         <SectionTitle title="Blog" />
 
         <div className="grid md:grid-cols-2 gap-8">
-          {blogs.map((blog: any) => (
+          {blogs.map((blog) => (
             <Link
               to={`/blog/${blog.slug}`}
               key={blog._id}
@@ -38,7 +39,7 @@ export default function BlogSection() {
               </h2>
 
               <p className="text-sm text-gray-400 line-clamp-3 mb-4">
-                {blog.content.slice(0, 120)}...
+                {stripMarkdown(blog.content).slice(0, 160)}...
               </p>
 
               <div className="flex items-center justify-between text-xs text-gray-500">

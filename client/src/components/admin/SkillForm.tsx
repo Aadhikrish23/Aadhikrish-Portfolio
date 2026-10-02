@@ -21,6 +21,7 @@ const SkillForm = ({ initialData, onSubmit }: Props) => {
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ const SkillForm = ({ initialData, onSubmit }: Props) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setIconFile(file);
+    setUploadError("");
     setIconPreview(URL.createObjectURL(file));
     setForm((f) => ({ ...f, iconUrl: undefined })); // clear old URL until upload
   };
@@ -58,10 +60,16 @@ const SkillForm = ({ initialData, onSubmit }: Props) => {
     if (iconFile) {
       try {
         setUploading(true);
+        setUploadError("");
         const url = await skillsApi.uploadSkillIcon(iconFile);
         finalData.iconUrl = url;
       } catch (err) {
-        console.error("Icon upload failed", err);
+        const res = (err as { response?: { data?: { message?: string } } }).response;
+        setUploadError(
+          res?.data?.message ||
+            "Icon upload failed. Try a PNG, JPG, WEBP or SVG file.",
+        );
+        return;
       } finally {
         setUploading(false);
       }
@@ -137,6 +145,12 @@ const SkillForm = ({ initialData, onSubmit }: Props) => {
           </label>
         )}
       </div>
+
+      {uploadError && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2">
+          {uploadError}
+        </p>
+      )}
 
       {/* Category + Level in a row */}
       <div className="grid grid-cols-2 gap-4">

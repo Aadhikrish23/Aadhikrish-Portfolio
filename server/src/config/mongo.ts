@@ -20,7 +20,7 @@ const connectMongoose = async () => {
     }
 
     await mongoose.connect(mongo_url);
-     console.log("Mongo DB connected and running in:" + mongo_url);
+    console.log(`MongoDB connected (${environment})`);
   } catch (error) {
     console.error("MongoDB is failing" + error);
     process.exit(1);

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import blogApi from "../../APIServices/blog.api";
 import type { Blog } from "../../types/blog.types";
 import { Link } from "react-router-dom";
+import { stripMarkdown } from "../../utils/markdown";
 
 export default function BlogPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -56,7 +57,7 @@ export default function BlogPage() {
               </h2>
 
               <p className="text-sm text-gray-400 line-clamp-3">
-                {blog.content}
+                {stripMarkdown(blog.content)}
               </p>
 
               {/* Tags */}
