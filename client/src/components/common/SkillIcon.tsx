@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { IconType } from 'react-icons';
+import { SiAnthropic, SiClaude, SiGooglegemini, SiLangchain, SiOllama, SiOpenai } from 'react-icons/si';
 
 interface SkillIconProps {
   name: string;
@@ -36,6 +38,17 @@ const UNSUPPORTED_KEYWORDS = [
   "gemini", "claude", "anthropic", "rest", "api",
 ];
 
+// Real marks for brands skillicons.dev does not cover (matched by keyword in the skill name)
+const brandIcons: [string, IconType][] = [
+  ['openai', SiOpenai],
+  ['chatgpt', SiOpenai],
+  ['langchain', SiLangchain],
+  ['anthropic', SiAnthropic],
+  ['claude', SiClaude],
+  ['gemini', SiGooglegemini],
+  ['ollama', SiOllama],
+];
+
 const isUnsupportedName = (name: string): boolean => {
   const lower = name.toLowerCase();
   return UNSUPPORTED_KEYWORDS.some((kw) => lower.includes(kw));
@@ -61,7 +74,14 @@ const SkillIcon = ({ name, className = "w-6 h-6", iconUrl }: SkillIconProps) => 
   const formattedName = exactMappings[cleanName] ?? cleanName.replace(/[^a-z0-9]/g, '');
   const isUnsupported = isUnsupportedName(name) || !formattedName;
 
-  // 2. Try skillicons.dev
+  // 2a. Brand mark for AI services skillicons.dev lacks
+  const brand = brandIcons.find(([keyword]) => cleanName.includes(keyword));
+  if (isUnsupported && brand) {
+    const BrandIcon = brand[1];
+    return <BrandIcon className={className} title={name} aria-label={name} />;
+  }
+
+  // 2b. Try skillicons.dev
   if (!isUnsupported && !skillIconError) {
     return (
       <img

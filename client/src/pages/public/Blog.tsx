@@ -1,89 +1,77 @@
-import { useEffect, useState } from "react";
-import blogApi from "../../APIServices/blog.api";
-import type { Blog } from "../../types/blog.types";
 import { Link } from "react-router-dom";
-import { stripMarkdown } from "../../utils/markdown";
+import blogApi from "../../APIServices/blog.api";
+import Kerned from "../../components/common/Kerned";
+import { EmptyState, ErrorState, Skeleton } from "../../components/common/StateBlocks";
+import { useServerData } from "../../hooks/useServerData";
+import { excerpt } from "../../utils/markdown";
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 export default function BlogPage() {
-  const [blogs, setBlogs] = useState<Blog[]>([]);
-
-  useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        const res = await blogApi.getBlogs();
-        setBlogs(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchBlogs();
-  }, []);
+  const { data: blogs, loading, error } = useServerData(async () => {
+    const res = await blogApi.getBlogs();
+    return res.data;
+  });
 
   return (
-    <section className="py-28 px-6 max-w-6xl mx-auto">
-
-      {/* Title */}
-      <h1 className="text-3xl font-bold mb-12">
+    <section className="py-16 md:py-28">
+      <h1 className="font-display text-6xl font-medium leading-[1.02] tracking-tight md:text-[6rem]">
         Blog
       </h1>
 
-      {/* Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-        {blogs.map((blog) => (
-          <Link
-            to={`/blog/${blog.slug}`}
-            key={blog._id}
-            className="group border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition"
-          >
-
-            {/* Cover Image */}
-            {blog.coverImage && (
-              <div className="h-48 overflow-hidden">
-                <img
-                  src={blog.coverImage}
-                  alt={blog.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition"
-                />
-              </div>
-            )}
-
-            {/* Content */}
-            <div className="p-5">
-
-              <h2 className="text-lg font-semibold mb-2 group-hover:text-white">
-                {blog.title}
-              </h2>
-
-              <p className="text-sm text-gray-400 line-clamp-3">
-                {stripMarkdown(blog.content)}
-              </p>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2 mt-4">
-                {blog.tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-2 py-1 border border-gray-700 rounded"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-
-              {/* Footer */}
-              <div className="text-xs text-gray-500 mt-4">
-                {new Date(blog.createdAt).toDateString()}
-              </div>
-
-            </div>
-
-          </Link>
-        ))}
-
+      <div className="mt-16">
+        {loading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-40" />
+            <Skeleton className="h-40" />
+          </div>
+        ) : error ? (
+          <ErrorState title="Couldn't load posts." />
+        ) : !blogs?.length ? (
+          <EmptyState title="No posts yet." body="New writing will show up here." />
+        ) : (
+          <ul className="divide-y divide-line border-y border-line">
+            {blogs.map((blog) => (
+              <li key={blog._id}>
+                <Link
+                  to={`/blog/${blog.slug}`}
+                  className="group grid gap-6 py-10 md:grid-cols-12 md:gap-10"
+                >
+                  {blog.coverImage && (
+                    <div className="self-start overflow-hidden border border-line bg-surface transition-colors duration-300 group-hover:border-muted md:col-span-4">
+                      <img
+                        src={blog.coverImage}
+                        alt=""
+                        loading="lazy"
+                        className="block h-auto max-h-80 w-full object-contain"
+                      />
+                    </div>
+                  )}
+                  <div className={blog.coverImage ? "md:col-span-8" : "md:col-span-12"}>
+                    <time dateTime={blog.createdAt} className="text-sm text-muted">
+                      {formatDate(blog.createdAt)}
+                    </time>
+                    <h2 className="mt-2 font-display text-3xl font-medium leading-tight text-fg transition-colors group-hover:text-muted md:text-5xl">
+                      <Kerned text={blog.title} />
+                    </h2>
+                    <p className="mt-4 max-w-[62ch] text-muted">{excerpt(blog.content, 220)}</p>
+                    {blog.tags.length > 0 && (
+                      <ul className="mt-5 flex flex-wrap gap-2">
+                        {blog.tags.map((tag) => (
+                          <li key={tag} className="border border-line px-3 py-1 text-sm text-muted">
+                            {tag}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-
     </section>
   );
 }

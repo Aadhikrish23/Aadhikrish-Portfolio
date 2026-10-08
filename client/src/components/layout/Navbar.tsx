@@ -1,39 +1,54 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { useMotionValueEvent, useScroll } from "motion/react";
+import { useSiteSettings } from "../../context/siteSettings.context";
+
+const links = [
+  { to: "/", label: "Home" },
+  { to: "/projects", label: "Projects" },
+  { to: "/blog", label: "Blog" },
+];
 
 const Navbar = () => {
+  const { siteName } = useSiteSettings();
+  const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // Only re-renders when crossing the threshold, not on every scroll frame
+  useMotionValueEvent(scrollY, "change", (y) => {
+    const next = y > 20;
+    if (next !== scrolled) setScrolled(next);
+  });
 
   return (
-    <div>
-      <nav
-        className={`fixed top-0 left-0 w-full z-50 flex justify-between items-center py-6 px-6 md:px-12 lg:px-20 border-b border-gray-800 
-        ${
-          scrolled
-            ? "bg-black/40 backdrop-blur-md border-b border-gray-800"
-            : "bg-transparent"
-        }`}
-      >
-        <Link to="/" className="text-xl font-semibold tracking-wide">
-          Aadhi.dev
+    <nav
+      className={`fixed inset-x-0 top-0 z-40 border-b transition-colors duration-300 ${
+        scrolled ? "border-line bg-canvas" : "border-transparent bg-transparent"
+      }`}
+    >
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 md:px-10">
+        <Link to="/" className="font-display text-xl font-medium tracking-wide">
+          {siteName}
         </Link>
 
-        <div className="flex gap-6 text-sm">
-          <Link to="/">Home</Link>
-          <Link to="/projects">Projects</Link>
-          <Link to="/blog">Blog</Link>
+        <div className="flex items-center gap-6 text-sm sm:gap-8">
+          {links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === "/"}
+              className={({ isActive }) =>
+                `border-b-2 py-1 transition-colors ${
+                  isActive ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"
+                }`
+              }
+            >
+              {link.label}
+            </NavLink>
+          ))}
         </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 };
 

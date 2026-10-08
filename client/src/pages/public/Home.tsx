@@ -4,8 +4,8 @@ import ContactSection from "../../components/sections/ContactSection";
 import BlogSection from "../../components/sections/BlogSection";
 import HeroSection from "../../components/sections/HeroSection";
 import AboutSection from "../../components/sections/AboutSection";
+
 export default function Home() {
-  
   return (
     <div>
       <HeroSection />

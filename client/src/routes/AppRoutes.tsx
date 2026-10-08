@@ -16,6 +16,7 @@ import Dashboard from "../pages/admin/Dashboard";
 import BlogAdmin from "../pages/admin/BlogAdmin";
 import ProjectsAdmin from "../pages/admin/ProjectsAdmin";
 import SkillsAdmin from "../pages/admin/SkillsAdmin";
+import SiteSettingsAdmin from "../pages/admin/SiteSettingsAdmin";
 
 const AppRoutes = () => {
   return (
@@ -45,6 +46,7 @@ const AppRoutes = () => {
         <Route path="projects" element={<ProjectsAdmin />} />
         <Route path="blogs" element={<BlogAdmin />} />
         <Route path="skills" element={<SkillsAdmin />} />
+        <Route path="content" element={<SiteSettingsAdmin />} />
       </Route>
     </Routes>
   );

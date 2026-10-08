@@ -1,60 +1,81 @@
 import { Link } from "react-router-dom";
+import { PiArrowUpRight } from "react-icons/pi";
 import type { Project } from "../../types/project.types";
+import { getProjectSummary, truncateWords } from "../../utils/project";
+import Kerned from "./Kerned";
 
 interface Props {
   project: Project;
+  /** Tailwind aspect class for the image frame */
+  aspect?: string;
 }
 
-const ProjectCard = ({ project }: Props) => {
-  return (
-    <div className="group relative rounded-xl overflow-hidden border border-gray-800 bg-black hover:border-gray-600 hover:shadow-lg hover:shadow-white/10 transition-all duration-300">
-
-      {/* Image */}
-      <div className="h-48 overflow-hidden">
-        <img
-          src={project.image}
-          alt={project.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-        />
+// Screenshots are shown whole, in natural color and proportion: tinting or cropping them
+// hides the very work this section exists to show. Only the no-image fallback plate uses a
+// fixed aspect ratio. Very tall images are capped and letterboxed instead of stretched.
+export function ProjectImage({
+  project,
+  aspect = "aspect-[16/10]",
+  className = "",
+}: {
+  project: Project;
+  aspect?: string;
+  className?: string;
+}) {
+  if (!project.image) {
+    return (
+      <div aria-hidden="true" className={`relative overflow-hidden bg-brown ${aspect} ${className}`}>
+        <span className="absolute left-6 top-4 font-display text-8xl font-medium leading-none text-fg md:text-9xl">
+          {project.title.trim().charAt(0)}
+        </span>
       </div>
+    );
+  }
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-center items-center text-center p-4">
+  return (
+    <div
+      className={`min-h-40 overflow-hidden border border-line bg-surface transition-colors duration-300 group-hover:border-muted ${className}`}
+    >
+      <img
+        src={project.image}
+        alt={project.title}
+        loading="lazy"
+        className="block h-auto max-h-[34rem] w-full object-contain"
+      />
+    </div>
+  );
+}
 
-        <h3 className="text-lg font-semibold mb-2">
-          {project.title}
-        </h3>
+// Info stays visible (no hover-only overlay) so it works on touch screens too.
+const ProjectCard = ({ project, aspect = "aspect-[16/10]" }: Props) => {
+  return (
+    <Link to={`/projects/${project.slug}`} className="group block">
+      <ProjectImage project={project} aspect={aspect} />
 
-        <p className="text-sm text-gray-300 line-clamp-2 mb-4">
-          {project.description}
+      <div className="mt-6">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="font-display text-3xl font-medium leading-tight text-fg md:text-4xl">
+            <Kerned text={project.title} />
+          </h3>
+          <PiArrowUpRight className="mt-2 h-6 w-6 shrink-0 text-muted transition group-hover:text-accent motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:translate-x-0.5" />
+        </div>
+
+        <p className="mt-3 max-w-[56ch] leading-relaxed text-muted">
+          {truncateWords(getProjectSummary(project.description))}
         </p>
 
-        <Link
-          to={`/projects/${project.slug}`}
-          className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium"
-        >
-          View Details
-        </Link>
-
-      </div>
-
-      {/* Bottom Info (visible always) */}
-      <div className="p-4">
-        <h3 className="font-semibold">{project.title}</h3>
-
-        <div className="flex flex-wrap gap-2 mt-2">
-          {project.techStack.slice(0, 3).map((tech, index) => (
-            <span
-              key={index}
-              className="text-xs px-2 py-1 border border-gray-700 rounded"
-            >
+        <ul className="mt-5 flex flex-wrap gap-2">
+          {project.techStack.slice(0, 4).map((tech) => (
+            <li key={tech} className="border border-line px-3 py-1 text-sm text-muted">
               {tech}
-            </span>
+            </li>
           ))}
-        </div>
+          {project.techStack.length > 4 && (
+            <li className="px-1 py-1 text-sm text-subtle">+{project.techStack.length - 4}</li>
+          )}
+        </ul>
       </div>
-
-    </div>
+    </Link>
   );
 };
 

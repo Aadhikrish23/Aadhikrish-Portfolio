@@ -37,7 +37,62 @@ body {
   color: #1e293b;
 }
 
+/* ---------- Public portfolio tokens (RGB triplets), scoped to .site ----------
+   Ink + slate neutrals with one calm blue accent. Slate "brown" token is a surface/field
+   color only (kept under the old name so components need no change).
+   Radius: 0 everywhere. Z-index scale: status pill 30, navbar 40, reading progress 50. */
+.site {
+  --canvas: 11 15 20;
+  --surface: 17 22 29;
+  --line: 35 43 54;
+  --fg: 232 236 241;
+  --muted: 178 190 204;
+  --subtle: 150 162 176;
+  --brown: 27 36 51;
+  --accent: 63 111 181;
+  --on-accent: 255 255 255;
+  color-scheme: dark;
+}
+
+/* Browser-owned surfaces carry the palette too */
+html:has(.site),
+body:has(.site) {
+  background-color: #0b0f14;
+  scrollbar-color: #2a3647 #0b0f14;
+}
+.site ::selection {
+  background: rgb(var(--accent));
+  color: rgb(var(--on-accent));
+}
+.site :focus-visible {
+  outline: 2px solid rgb(var(--muted));
+  outline-offset: 3px;
+}
+.site a {
+  text-underline-offset: 0.3em;
+}
+
 @layer utilities {
+  /* Markdown body colors follow the active theme */
+  .prose-theme {
+    --tw-prose-body: rgb(var(--muted));
+    --tw-prose-headings: rgb(var(--fg));
+    --tw-prose-lead: rgb(var(--muted));
+    --tw-prose-links: rgb(124 164 230);
+    --tw-prose-bold: rgb(var(--fg));
+    --tw-prose-counters: rgb(var(--subtle));
+    --tw-prose-bullets: rgb(var(--subtle));
+    --tw-prose-hr: rgb(var(--line));
+    --tw-prose-quotes: rgb(var(--fg));
+    --tw-prose-quote-borders: rgb(var(--accent));
+    --tw-prose-captions: rgb(var(--subtle));
+    --tw-prose-code: rgb(var(--fg));
+    --tw-prose-pre-code: rgb(var(--fg));
+    --tw-prose-pre-bg: rgb(var(--surface));
+    --tw-prose-th-borders: rgb(var(--line));
+    --tw-prose-td-borders: rgb(var(--line));
+  }
+
   .animation-delay-2000 {
     animation-delay: 2s;
   }

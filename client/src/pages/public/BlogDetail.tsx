@@ -1,150 +1,117 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import blogApi from "../../APIServices/blog.api";
-import type { Blog } from "../../types/blog.types";
+import { motion, useScroll, useSpring } from "motion/react";
+import { PiArrowLeft } from "react-icons/pi";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import blogApi from "../../APIServices/blog.api";
+import Kerned from "../../components/common/Kerned";
+import { EmptyState, Skeleton } from "../../components/common/StateBlocks";
+import { useServerData } from "../../hooks/useServerData";
 
 export default function BlogDetail() {
-  const { slug } = useParams();
-  const [blog, setBlog] = useState<Blog | null>(null);
-  const [progress, setProgress] = useState(0);
+  const { slug = "" } = useParams();
+  const { data: blog, loading, error } = useServerData(async () => {
+    const res = await blogApi.getBlogBySlug(slug);
+    return res.data;
+  }, slug);
 
-  // 📊 Reading progress bar
-  useEffect(() => {
-    const handleScroll = () => {
-      const total = document.body.scrollHeight - window.innerHeight;
-      const current = window.scrollY;
-      setProgress((current / total) * 100);
-    };
+  // Reading progress driven by a motion value, not React state
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 200, damping: 30, restDelta: 0.001 });
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6 py-16">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-20" />
+        <Skeleton className="aspect-[16/9]" />
+        <Skeleton className="h-40" />
+      </div>
+    );
+  }
 
-  // 📦 Fetch blog
-  useEffect(() => {
-    const fetchBlog = async () => {
-      try {
-        if (!slug) return;
-        const res = await blogApi.getBlogBySlug(slug);
-        setBlog(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+  if (error || !blog) {
+    return (
+      <div className="mx-auto max-w-3xl py-24">
+        <EmptyState
+          title="Post not found."
+          body="It may have been unpublished or moved."
+          action={{ label: "Back to Blogs", to: "/blog" }}
+        />
+      </div>
+    );
+  }
 
-    fetchBlog();
-  }, [slug]);
-
-  if (!blog) return <div className="py-20 text-center">Loading...</div>;
-
-  // ⏱️ Reading time
-  const readingTime = Math.ceil(blog.content.split(" ").length / 200);
+  const readingTime = Math.max(1, Math.ceil(blog.content.split(/\s+/).length / 200));
+  const date = new Date(blog.createdAt).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
     <>
-      {/* 🔥 Progress Bar */}
-      <div
-        className="fixed top-0 left-0 h-1 bg-white z-50 transition-all"
-        style={{ width: `${progress}%` }}
+      <motion.div
+        className="fixed inset-x-0 top-0 z-50 h-1 origin-left bg-accent"
+        style={{ scaleX: progress }}
       />
 
-      <section className="py-28 px-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Back */}
-          <Link
-            to="/blog"
-            className="text-sm text-gray-500 hover:text-white"
-          >
-            ← Back to Blogs
-          </Link>
+      <article className="mx-auto max-w-3xl py-16 md:py-24">
+        <Link
+          to="/blog"
+          className="group inline-flex items-center gap-2 text-muted transition hover:text-fg"
+        >
+          <PiArrowLeft className="h-4 w-4 transition-transform motion-safe:group-hover:-translate-x-1" />
+          Back to Blogs
+        </Link>
 
-          {/* Title */}
-          <div className="mb-12 mt-6">
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
-              {blog.title}
-            </h1>
+        <header className="mt-8">
+          <h1 className="font-display text-5xl font-medium leading-[1.04] tracking-tight md:text-[4.5rem]">
+            <Kerned text={blog.title} />
+          </h1>
+          <p className="mt-6 text-muted">
+            {date} • {readingTime} min read
+          </p>
+        </header>
 
-            <p className="text-sm text-gray-500">
-              {new Date(blog.createdAt).toDateString()} • {readingTime} min read
-            </p>
+        {blog.coverImage && (
+          <div className="mt-12 overflow-hidden border border-line bg-surface">
+            <img src={blog.coverImage} alt="" className="block h-auto max-h-[36rem] w-full object-contain" />
           </div>
+        )}
 
-          {/* Hero Image */}
-          {blog.coverImage && (
-            <div className="mb-16 relative">
-              <img
-                src={blog.coverImage}
-                alt={blog.title}
-                className="w-full h-[350px] md:h-[450px] object-cover rounded-2xl"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-2xl" />
-            </div>
-          )}
+        <div className="prose prose-lg prose-theme mt-12 max-w-none prose-headings:font-display prose-headings:font-medium prose-a:underline prose-a:decoration-accent prose-a:decoration-2 prose-a:underline-offset-4 prose-blockquote:border-0 prose-blockquote:pl-0 prose-blockquote:font-display prose-blockquote:text-2xl prose-blockquote:font-normal prose-blockquote:not-italic prose-code:before:content-none prose-code:after:content-none prose-img:rounded-none">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{blog.content}</ReactMarkdown>
+        </div>
 
-          {/* Divider */}
-          <hr className="border-gray-800 mb-10" />
+        {blog.tags.length > 0 && (
+          <ul className="mt-12 flex flex-wrap gap-2">
+            {blog.tags.map((tag) => (
+              <li key={tag} className="border border-line px-3 py-1 text-sm text-muted">
+                {tag}
+              </li>
+            ))}
+          </ul>
+        )}
 
-          {/* Content */}
-          <div
-            className="
-              prose 
-              prose-invert 
-              prose-lg 
-              max-w-none
-
-              prose-headings:font-bold
-              prose-headings:text-white
-              prose-h2:border-l-4
-              prose-h2:border-white
-              prose-h2:pl-4
-              prose-h2:mt-10
-              prose-h2:mb-4
-
-              prose-p:text-gray-300
-              prose-li:text-gray-300
-              prose-strong:text-white
-
-              prose-a:text-blue-400
-              prose-a:no-underline
-              hover:prose-a:underline
-
-              prose-code:text-green-400
-              prose-hr:border-gray-700
-            "
-          >
-            <div className="space-y-6">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {blog.content}
-              </ReactMarkdown>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="mt-16 p-6 border border-gray-800 rounded-xl text-center">
-            <p className="text-gray-300 mb-4">
-              Enjoyed reading this?
-            </p>
-
-            <div className="flex justify-center gap-4">
-              <Link
-                to="/projects"
-                className="px-5 py-2 bg-white text-black rounded-lg font-medium"
-              >
-                View Projects
-              </Link>
-
-              <Link
-                to="/#contact"
-                className="px-5 py-2 border border-gray-700 rounded-lg"
-              >
-                Contact Me
-              </Link>
-            </div>
+        <div className="mt-16 flex flex-col gap-6 bg-brown p-8 sm:flex-row sm:items-center sm:justify-between md:p-10">
+          <p className="font-display text-2xl font-medium text-fg">Enjoyed reading this?</p>
+          <div className="flex flex-wrap gap-4">
+            <Link
+              to="/projects"
+              className="bg-canvas px-6 py-3 font-medium text-fg transition-colors hover:bg-fg hover:text-canvas active:translate-y-px"
+            >
+              View Projects
+            </Link>
+            <Link
+              to="/#contact"
+              className="border border-fg px-6 py-3 font-medium text-fg transition-colors hover:bg-fg hover:text-canvas active:translate-y-px"
+            >
+              Contact Me
+            </Link>
           </div>
         </div>
-      </section>
+      </article>
     </>
   );
 }

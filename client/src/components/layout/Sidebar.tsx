@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { FaHome, FaProjectDiagram, FaPenNib, FaCode } from "react-icons/fa";
+import { FaHome, FaProjectDiagram, FaPenNib, FaCode, FaCog } from "react-icons/fa";
 
 const Sidebar = () => {
   const navItems = [
@@ -7,6 +7,7 @@ const Sidebar = () => {
     { name: "Projects", path: "/admin/projects", icon: <FaProjectDiagram /> },
     { name: "Blogs", path: "/admin/blogs", icon: <FaPenNib /> },
     { name: "Skills", path: "/admin/skills", icon: <FaCode /> },
+    { name: "Site Content", path: "/admin/content", icon: <FaCog /> },
   ];
 
   return (

@@ -1,77 +1,94 @@
-import { useState, useEffect } from "react";
 import skillsApi from "../../APIServices/skills.api";
 import type { Skill } from "../../types/skills.types";
 import SectionTitle from "../common/SectionTitle";
-import SkillIcon from "../common/SkillIcon";
-export default function SkillsSection() {
-  const [skills, setSkills] = useState<Skill[]>([]);
+import TintedIcon from "../common/TintedIcon";
+import { EmptyState, ErrorState, Skeleton } from "../common/StateBlocks";
+import { useServerData } from "../../hooks/useServerData";
 
-  useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        const res = await skillsApi.getSkills();
-        setSkills(res.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchSkills();
-  }, []);
-  const groupedSkills = skills.reduce(
+const order = ["frontend", "backend", "ai", "database", "tools"];
+const categoryTitles: Record<string, string> = {
+  frontend: "Frontend",
+  backend: "Backend",
+  ai: "AI / Services",
+  database: "Database",
+  tools: "Tools",
+};
+
+// One equal-width column per category on desktop (static strings so Tailwind keeps them).
+const columns: Record<number, string> = {
+  1: "lg:grid-cols-1",
+  2: "lg:grid-cols-2",
+  3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4",
+  5: "lg:grid-cols-5",
+};
+
+// Strongest first, then alphabetical, so the order is stable and not reshuffled by edits.
+const byStrength = (a: Skill, b: Skill) => (b.level ?? 0) - (a.level ?? 0) || a.name.localeCompare(b.name);
+
+export default function SkillsSection() {
+  const { data: skills, loading, error } = useServerData(async () => {
+    const res = await skillsApi.getSkills();
+    return res.data;
+  });
+
+  const grouped = (skills ?? []).reduce(
     (acc, skill) => {
-      if (!acc[skill.category]) {
-        acc[skill.category] = [];
-      }
-      acc[skill.category].push(skill);
+      (acc[skill.category] ??= []).push(skill);
       return acc;
     },
     {} as Record<string, Skill[]>,
   );
+  const categories = order.filter((c) => grouped[c]?.length);
+  // With four or more columns each is narrow, so its skills list one per row
+  const narrow = categories.length >= 4;
 
-  const order = ["frontend", "backend", "ai", "database", "tools"];
-  const categoryTitles: Record<string, string> = {
-    frontend: "Frontend",
-    backend: "Backend",
-    ai: "AI / Services",
-    database: "Database",
-    tools: "Tools",
-  };
   return (
-    <section className="py-28 border-t border-gray-800">
-      <div className="max-w-6xl mx-auto">
-        <SectionTitle title={"Skill"}></SectionTitle>
+    <section id="skills" className="scroll-mt-16 border-t border-line py-20 md:py-28">
+      <SectionTitle title="Skills" />
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6 ">
-          {order.map((category) => {
-            const skills = groupedSkills[category];
-            if (!skills) return null;
-
-            return (
-              <div
-                key={category}
-                className="h-full min-h-[140px] border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition hover:-translate-y-1 hover:shadow-lg hover:shadow-white/5"
-              >
-                <h3 className="text-lg font-semibold mb-4">
+      <div className="mt-14">
+        {loading ? (
+          <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-5">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-40" />
+            ))}
+          </div>
+        ) : error ? (
+          <ErrorState title="Couldn't load skills." />
+        ) : categories.length === 0 ? (
+          <EmptyState title="No skills listed yet." />
+        ) : (
+          <div
+            className={`grid gap-x-10 gap-y-14 sm:grid-cols-2 ${columns[categories.length] ?? columns[5]}`}
+          >
+            {categories.map((category) => (
+              <div key={category} className="border-t border-muted/40 pt-6">
+                <h3 className="font-display text-2xl font-medium text-fg md:text-3xl">
                   {categoryTitles[category]}
                 </h3>
 
-                <div className="grid grid-cols-1 gap-3 py-2 ">
-                  {skills.map((skill) => (
-                    <div
+                <ul
+                  className={`mt-7 grid grid-cols-2 gap-x-4 gap-y-4 ${narrow ? "lg:grid-cols-1" : ""}`}
+                >
+                  {[...grouped[category]].sort(byStrength).map((skill) => (
+                    <li
                       key={skill._id}
-                      className="flex items-center justify-start gap-3 px-3 py-2 border border-gray-700 rounded-lg text-sm hover:border-gray-500 hover:bg-white/5 transition "
+                      className="group flex min-w-0 items-center gap-3 text-[17px] text-fg"
                     >
-                      <span className="flex-shrink-0 flex items-center justify-center">
-                        <SkillIcon name={skill.name} iconUrl={skill.iconUrl} className="w-6 h-6" />
-                      </span>
-                      <span>{skill.name}</span>
-                    </div>
+                      <TintedIcon
+                        name={skill.name}
+                        iconUrl={skill.iconUrl}
+                        className="h-[22px] w-[22px]"
+                      />
+                      <span className="truncate">{skill.name}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
