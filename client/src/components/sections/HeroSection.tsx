@@ -28,9 +28,22 @@ export default function HeroSection() {
         />
 
         {hero.tagline && (
-          <motion.div {...rise(0.45)} className="mt-5 flex items-center gap-4 md:mt-6">
-            <span aria-hidden="true" className="h-0.5 w-10 shrink-0 bg-accent" />
-            <h2 className="text-lg text-muted md:text-xl">{hero.tagline}</h2>
+          <motion.div {...rise(0.45)} className="mt-5 flex items-start gap-4 md:mt-6">
+            <span aria-hidden="true" className="mt-[13px] h-0.5 w-10 shrink-0 bg-accent" />
+            {/* Roles wrap whole. Each carries a leading bullet; the row is shifted left inside an
+                overflow-hidden box so a bullet that lands at the start of a line is clipped. */}
+            <h2 className="overflow-hidden text-lg text-muted md:text-xl">
+              <span className="-ml-6 flex flex-wrap">
+                {hero.tagline.split("•").map((role) => (
+                  <span
+                    key={role}
+                    className="relative whitespace-nowrap pl-6 before:absolute before:left-2.5 before:text-subtle before:content-['•']"
+                  >
+                    {role.trim()}
+                  </span>
+                ))}
+              </span>
+            </h2>
           </motion.div>
         )}
 

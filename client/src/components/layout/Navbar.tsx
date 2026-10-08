@@ -9,6 +9,18 @@ const links = [
   { to: "/blog", label: "Blog" },
 ];
 
+// "Aadhi.dev" -> the suffix after the last dot picks up the accent (lightened so it reads as text)
+function SiteName({ name }: { name: string }) {
+  const dot = name.lastIndexOf(".");
+  if (dot <= 0 || dot === name.length - 1) return <>{name}</>;
+  return (
+    <>
+      {name.slice(0, dot)}
+      <span className="text-accent-text">{name.slice(dot)}</span>
+    </>
+  );
+}
+
 const Navbar = () => {
   const { siteName } = useSiteSettings();
   const { scrollY } = useScroll();
@@ -28,7 +40,7 @@ const Navbar = () => {
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 md:px-10">
         <Link to="/" className="font-display text-xl font-medium tracking-wide">
-          {siteName}
+          <SiteName name={siteName} />
         </Link>
 
         <div className="flex items-center gap-6 text-sm sm:gap-8">

@@ -18,6 +18,7 @@ export default {
         subtle: token("subtle"),
         brown: token("brown"),
         accent: token("accent"),
+        "accent-text": token("accent-text"),
         "on-accent": token("on-accent"),
       },
       fontFamily: {

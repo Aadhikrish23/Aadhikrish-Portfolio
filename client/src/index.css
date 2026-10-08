@@ -50,6 +50,7 @@ body {
   --subtle: 150 162 176;
   --brown: 27 36 51;
   --accent: 63 111 181;
+  --accent-text: 124 164 230;
   --on-accent: 255 255 255;
   color-scheme: dark;
 }
