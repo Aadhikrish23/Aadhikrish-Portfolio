@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-08T00:00:00Z",
+  "title": "Design System: Aadhi.dev Portfolio (public site)",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#0b0f14", "tonalRamp": ["#05070a", "#0b0f14", "#11161d", "#171e28", "#232b36", "#2f3a48", "#3d4a5c", "#4f5f75"] },
+      "panel": { "role": "neutral", "displayName": "Panel", "canonical": "#11161d", "tonalRamp": ["#0b0f14", "#0e1318", "#11161d", "#151b24", "#1b2433", "#232b36", "#2c3644", "#38445a"] },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#232b36", "tonalRamp": ["#11161d", "#171e28", "#1d2530", "#232b36", "#2c3644", "#38445a", "#4a586e", "#5f6f87"] },
+      "mist-white": { "role": "neutral", "displayName": "Mist White", "canonical": "#e8ecf1", "tonalRamp": ["#5f6f87", "#7f8da1", "#9fabbb", "#bcc5d1", "#d0d7e0", "#dfe4eb", "#e8ecf1", "#f4f6f9"] },
+      "slate-text": { "role": "neutral", "displayName": "Slate Text", "canonical": "#b2becc", "tonalRamp": ["#2c3644", "#4a586e", "#677791", "#8493a8", "#9aa8ba", "#b2becc", "#cad3de", "#e1e7ee"] },
+      "slate-dim": { "role": "neutral", "displayName": "Slate Dim", "canonical": "#96a2b0", "tonalRamp": ["#232b36", "#3d4a5c", "#566577", "#707f90", "#96a2b0", "#aab4c0", "#c0c8d2", "#d6dce3"] },
+      "slate-field": { "role": "secondary", "displayName": "Slate Field", "canonical": "#1b2433", "tonalRamp": ["#0e1219", "#141a25", "#1b2433", "#243044", "#2f3d55", "#3d4d69", "#52647f", "#6c7e98"] },
+      "steel-blue": { "role": "primary", "displayName": "Steel Blue", "canonical": "#3f6fb5", "tonalRamp": ["#14233a", "#1e3659", "#2b4d80", "#3f6fb5", "#5887c9", "#7ca4e6", "#a3c0ee", "#c9dbf6"] }
+    },
+    "typographyMeta": {
+      "display-hero": { "displayName": "Display Hero", "purpose": "The hero headline only, revealed word by word." },
+      "display-section": { "displayName": "Display Section", "purpose": "Section titles and blog post titles." },
+      "headline": { "displayName": "Headline", "purpose": "Project titles, About lead, experience roles, contact heading." },
+      "title": { "displayName": "Title", "purpose": "Sub-block headings, skill categories and state titles." },
+      "body": { "displayName": "Body", "purpose": "Running copy in Geist, 52-56ch." },
+      "label": { "displayName": "Label", "purpose": "Nav, chips, meta lines; sentence case." }
+    },
+    "shadows": [
+      { "name": "status-pill", "value": "0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -4px rgba(0,0,0,0.4)", "purpose": "The only elevated element: the transient server wake-up notice." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "All entrance motion: hero words, portrait wipe, Reveal, status pill." },
+      { "name": "duration-hero-word", "value": "800ms, 50ms stagger", "purpose": "Headline mask reveal." },
+      { "name": "duration-portrait-wipe", "value": "1100ms", "purpose": "Portrait clip-path reveal." },
+      { "name": "duration-reveal", "value": "800ms, 28px rise, once", "purpose": "Scroll reveal on project cards." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ],
+    "zIndex": [
+      { "name": "status-pill", "value": "30" },
+      { "name": "navbar", "value": "40" },
+      { "name": "reading-progress", "value": "50" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Steel-blue rectangle for the main action.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\">View Projects</a>",
+      "css": ".ds-btn-primary { display: inline-block; background: #3f6fb5; color: #ffffff; padding: 14px 28px; font-family: 'Geist Variable', system-ui, sans-serif; font-weight: 500; border-radius: 0; text-decoration: none; transition: background-color 0.15s; } .ds-btn-primary:hover { background: #b2becc; } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid #b2becc; outline-offset: 3px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action; fills mist white on hover.",
+      "html": "<a class=\"ds-btn-outline\" href=\"#\">Contact Me</a>",
+      "css": ".ds-btn-outline { display: inline-block; border: 1px solid #b2becc; color: #e8ecf1; padding: 14px 28px; font-family: 'Geist Variable', system-ui, sans-serif; font-weight: 500; border-radius: 0; text-decoration: none; transition: background-color 0.15s, color 0.15s; } .ds-btn-outline:hover { background: #e8ecf1; color: #0b0f14; } .ds-btn-outline:active { transform: translateY(1px); } .ds-btn-outline:focus-visible { outline: 2px solid #b2becc; outline-offset: 3px; }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "label",
+      "description": "Thin fixed row: serif wordmark left, three links right, steel-blue underline on the active one.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav-mark\">Aadhi.dev</span><div class=\"ds-nav-links\"><a class=\"ds-nav-link ds-active\" href=\"#\">Home</a><a class=\"ds-nav-link\" href=\"#\">Projects</a><a class=\"ds-nav-link\" href=\"#\">Blog</a></div></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; height: 64px; padding: 0 40px; background: #0b0f14; border-bottom: 1px solid #232b36; font-family: 'Geist Variable', system-ui, sans-serif; } .ds-nav-mark { font-family: 'Bodoni Moda Variable', Georgia, serif; font-size: 20px; font-weight: 500; letter-spacing: 0.025em; color: #e8ecf1; } .ds-nav-links { display: flex; gap: 32px; font-size: 14px; } .ds-nav-link { padding: 4px 0; color: #b2becc; text-decoration: none; border-bottom: 2px solid transparent; transition: color 0.15s; } .ds-nav-link:hover { color: #e8ecf1; } .ds-nav-link:focus-visible { outline: 2px solid #b2becc; outline-offset: 3px; } .ds-nav-link.ds-active { color: #e8ecf1; border-bottom-color: #3f6fb5; }"
+    },
+    {
+      "name": "Tech Tag",
+      "kind": "chip",
+      "refersTo": "tag-chip",
+      "description": "Hairline-bordered square tag on project cards and blog posts.",
+      "html": "<span class=\"ds-tag\">React</span>",
+      "css": ".ds-tag { display: inline-block; border: 1px solid #232b36; padding: 4px 12px; font-family: 'Geist Variable', system-ui, sans-serif; font-size: 14px; color: #b2becc; border-radius: 0; }"
+    },
+    {
+      "name": "Project Card",
+      "kind": "card",
+      "refersTo": "headline",
+      "description": "Whole, natural-colour screenshot in a hairline frame over always-visible title, summary and tags.",
+      "html": "<a class=\"ds-card\" href=\"#\"><div class=\"ds-card-img\"></div><h3 class=\"ds-card-title\">Project Title</h3><p class=\"ds-card-text\">One or two lines of summary copy.</p></a>",
+      "css": ".ds-card { display: block; width: 360px; text-decoration: none; } .ds-card-img { aspect-ratio: 16/10; background: #11161d; border: 1px solid #232b36; transition: border-color 0.3s; } .ds-card:hover .ds-card-img { border-color: #b2becc; } .ds-card-title { margin: 24px 0 0; font-family: 'Bodoni Moda Variable', Georgia, serif; font-size: 30px; font-weight: 500; line-height: 1.25; color: #e8ecf1; } .ds-card-text { margin: 12px 0 0; font-family: 'Geist Variable', system-ui, sans-serif; line-height: 1.625; color: #b2becc; } .ds-card:focus-visible { outline: 2px solid #b2becc; outline-offset: 3px; }"
+    },
+    {
+      "name": "Contact Row",
+      "kind": "custom",
+      "refersTo": "slate-field",
+      "description": "Link row on the slate field: icon, label over value, arrow at the end.",
+      "html": "<div class=\"ds-field\"><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-icon\"></span><span class=\"ds-row-text\"><span class=\"ds-row-label\">Email</span><span class=\"ds-row-value\">hello@example.com</span></span><span class=\"ds-row-arrow\">&#8599;</span></a></div>",
+      "css": ".ds-field { background: #1b2433; padding: 32px 40px; width: 420px; } .ds-row { display: flex; align-items: center; gap: 16px; padding: 20px 0; border-top: 1px solid rgba(232,236,241,0.25); border-bottom: 1px solid rgba(232,236,241,0.25); color: #e8ecf1; text-decoration: none; font-family: 'Geist Variable', system-ui, sans-serif; transition: color 0.15s; } .ds-row:hover { color: #b2becc; } .ds-row-icon { width: 24px; height: 24px; border: 2px solid currentColor; } .ds-row-text { flex: 1; display: block; } .ds-row-label { display: block; font-size: 14px; opacity: 0.8; } .ds-row-value { display: block; font-size: 20px; font-weight: 500; } .ds-row-arrow { font-size: 20px; } .ds-row:focus-visible { outline: 2px solid #b2becc; outline-offset: 3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Monograph",
+    "overview": "A dark, quiet monograph in which the work is the subject and the interface recedes. Cool ink and slate neutrals carry the page, a large high-contrast Bodoni serif carries every heading, and a single steel-blue accent marks the few places the visitor can act or is currently located. The owner chose this cooler, professional and elegant palette over the original warm-earth reference; it is the binding palette.\n\nEverything is square-edged and flat: slabs, images, buttons and chips have no radius and no card elevation, and there is no curved or geometric decoration. Depth comes from full-bleed slate fields set against ink, and from hairlines. All photography (portrait, project screenshots, blog covers) is natural color with no tint, duotone or parallax. The site is dark-only; there is no light theme.",
+    "keyCharacteristics": [
+      "Ink ground, slate-field full-bleed bands, slate-text secondary copy and mist-white primary text.",
+      "Steel blue reserved for the primary button, active-nav underline, link and action underlines, the short dash by the hero tagline, selection, the server-status dot and the reading-progress bar.",
+      "Bodoni Moda for display only, Geist for everything else.",
+      "Radius 0 on all UI; no curved accent motif.",
+      "Project screenshots and blog covers are shown whole, never cropped or tinted.",
+      "One authored entrance (hero), restrained motion elsewhere, all gated by reduced-motion."
+    ],
+    "rules": [
+      { "name": "The Blue-Is-Signal Rule", "body": "Steel blue marks action and place: fills, underlines, a dash, a dot, a progress bar. If it would color a sentence on the slate field, use mist white with a blue underline instead.", "section": "colors" },
+      { "name": "The Slate-Is-Ground Rule", "body": "Slate field is a band, not a text color. Text on it is mist white only.", "section": "colors" },
+      { "name": "The Serif-Is-Loud Rule", "body": "Bodoni is for headings and pull statements at 1.5rem and up. Everything smaller is Geist.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat. Only the transient status pill floats.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep radius at 0 and decoration to hairlines and short dashes.",
+      "Do set text on the slate field in mist white only.",
+      "Do show every image in natural color; show screenshots and covers whole.",
+      "Do use Bodoni for headings at 1.5rem and above, Geist below.",
+      "Do keep steel blue to fills, underlines, dashes, dots and progress marks.",
+      "Do give every motion a `prefers-reduced-motion` static fallback.",
+      "Do keep project information visible without hover.",
+      "Do keep copy editable as data; do not hard-code owner content into components."
+    ],
+    "donts": [
+      "Don't use steel blue, slate text or slate dim as text where they fall below 4.5:1 (blue on the slate field).",
+      "Don't add a light theme or a dark-mode toggle; the site is dark-only.",
+      "Don't introduce pills, rounded cards or soft card shadows.",
+      "Don't add neon, gradient fills, decorative curves or a centered gradient hero.",
+      "Don't apply duotone, tint, sepia or parallax to photography."
+    ]
+  }
+}
