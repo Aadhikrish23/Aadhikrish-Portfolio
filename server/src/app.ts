@@ -7,6 +7,7 @@ import authMiddleware from "./middlewares/auth.middleware";
 import projectRoutes from "./routes/project.routes";
 import blogRoutes from "./routes/blog.routes";
 import skillsRoutes from "./routes/skills.routes"
+import settingsRoutes from "./routes/settings.routes";
 dotenv.config()
 
 const app = express()
@@ -36,6 +37,7 @@ app.use("/api/auth",authRouter);
 app.use("/api/projects", projectRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/skills", skillsRoutes);
+app.use("/api/settings", settingsRoutes);
 app.use(errorHandler);
 
 
