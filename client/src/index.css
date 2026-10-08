@@ -65,6 +65,14 @@ body:has(.site) {
   background: rgb(var(--accent));
   color: rgb(var(--on-accent));
 }
+.site input,
+.site textarea,
+.site select {
+  color-scheme: dark;
+  background-color: rgb(var(--surface));
+  color: rgb(var(--fg));
+  border-radius: 0;
+}
 .site :focus-visible {
   outline: 2px solid rgb(var(--muted));
   outline-offset: 3px;
@@ -109,10 +117,10 @@ body:has(.site) {
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
+    background: #2a3647;
+    border-radius: 0;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #3b4a60;
   }
 }

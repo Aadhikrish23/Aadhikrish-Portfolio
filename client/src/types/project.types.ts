@@ -8,6 +8,7 @@ export interface Project {
   liveUrl?: string;
   image?: string;
   featured: boolean;
+  order?: number;
 }
 export interface ParsedDescription  {
   description: string;

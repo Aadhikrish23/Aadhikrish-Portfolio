@@ -1,160 +1,157 @@
-import { useState, useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { PiImage, PiX } from "react-icons/pi";
 import type { Blog } from "../../types/blog.types";
-import { FaGlobe, FaLock, FaImage } from "react-icons/fa";
+import { Button, Field, Toggle, fieldClass } from "./ui";
 
 interface Props {
   initialData?: Blog;
   onSubmit: (data: FormData) => Promise<void>;
+  onCancel?: () => void;
 }
 
-const BlogForm = ({ initialData, onSubmit }: Props) => {
+const BlogForm = ({ initialData, onSubmit, onCancel }: Props) => {
+  const uid = useId();
   const [form, setForm] = useState({
-    title: "",
-    content: "",
-    tags: "",
-    published: true,
+    title: initialData?.title ?? "",
+    content: initialData?.content ?? "",
+    tags: initialData?.tags.join(", ") ?? "",
+    published: initialData?.published ?? true,
   });
 
   const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const urlRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        title: initialData.title,
-        content: initialData.content,
-        tags: initialData.tags.join(", "),
-        published: initialData.published,
-      });
-      if (initialData.coverImage) {
-        setImagePreview(initialData.coverImage);
-      }
-    }
-  }, [initialData]);
+  const preview = localPreview ?? initialData?.coverImage ?? null;
+
+  // Revoke the object URL on unmount so previews never leak.
+  useEffect(
+    () => () => {
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    },
+    [],
+  );
+
+  const setLocalFile = (file: File | null) => {
+    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    urlRef.current = file ? URL.createObjectURL(file) : null;
+    setImage(file);
+    setLocalPreview(urlRef.current);
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setImage(file);
-    if (file) {
-      setImagePreview(URL.createObjectURL(file));
-    }
+    const file = e.target.files?.[0];
+    if (file) setLocalFile(file);
+    e.target.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (saving) return;
+    setSaving(true);
     try {
       const fd = new FormData();
-      fd.append("title", form.title);
+      fd.append("title", form.title.trim());
       fd.append("content", form.content);
       fd.append("tags", form.tags);
       fd.append("published", String(form.published));
       if (image) fd.append("coverImage", image);
       await onSubmit(fd);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <fieldset disabled={saving} className="min-w-0 space-y-6">
+        <Field label="Title" htmlFor={`${uid}-title`}>
+          <input
+            id={`${uid}-title`}
+            placeholder="e.g. How I built a real-time chat app"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            className={fieldClass}
+            required
+          />
+        </Field>
 
-      {/* Title */}
-      <div className="space-y-1">
-        <label className="block text-sm font-semibold text-slate-700">Blog Title</label>
-        <input
-          placeholder="e.g. How I built a real-time chat app"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
-          required
-        />
-      </div>
+        <Field label="Content" hint="Markdown supported" htmlFor={`${uid}-content`}>
+          <textarea
+            id={`${uid}-content`}
+            placeholder="Write your post here..."
+            value={form.content}
+            onChange={(e) => setForm({ ...form, content: e.target.value })}
+            className={`${fieldClass} resize-y`}
+            rows={9}
+            required
+          />
+        </Field>
 
-      {/* Content */}
-      <div className="space-y-1">
-        <label className="block text-sm font-semibold text-slate-700">Content</label>
-        <textarea
-          placeholder="Write your blog content here..."
-          value={form.content}
-          onChange={(e) => setForm({ ...form, content: e.target.value })}
-          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 resize-none"
-          rows={7}
-          required
-        />
-      </div>
+        <Field label="Tags" hint="comma separated" htmlFor={`${uid}-tags`}>
+          <input
+            id={`${uid}-tags`}
+            placeholder="e.g. React, WebSockets, Node.js"
+            value={form.tags}
+            onChange={(e) => setForm({ ...form, tags: e.target.value })}
+            className={fieldClass}
+          />
+        </Field>
 
-      {/* Tags */}
-      <div className="space-y-1">
-        <label className="block text-sm font-semibold text-slate-700">
-          Tags{" "}
-          <span className="text-xs font-normal text-slate-400">comma separated</span>
-        </label>
-        <input
-          placeholder="e.g. React, WebSockets, Node.js"
-          value={form.tags}
-          onChange={(e) => setForm({ ...form, tags: e.target.value })}
-          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
-        />
-      </div>
-
-      {/* Cover Image */}
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-700">Cover Image</label>
-        {imagePreview ? (
-          <div className="relative rounded-xl overflow-hidden border border-slate-200 group">
-            <img src={imagePreview} alt="Cover preview" className="w-full h-40 object-cover" />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <label className="cursor-pointer px-4 py-2 bg-white/90 rounded-lg text-sm font-medium text-slate-700 hover:bg-white transition-colors">
-                Change Image
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
+        <Field label="Cover image" htmlFor={`${uid}-cover`}>
+          {preview ? (
+            <div className="border border-line">
+              <img src={preview} alt="Cover preview" className="h-44 w-full object-cover" />
+              <div className="flex flex-wrap items-center gap-2 border-t border-line p-2">
+                <label
+                  htmlFor={`${uid}-cover`}
+                  className="cursor-pointer px-3 py-1.5 text-sm text-fg transition-colors hover:bg-surface"
+                >
+                  Replace image
+                </label>
+                {image && (
+                  <button
+                    type="button"
+                    onClick={() => setLocalFile(null)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface hover:text-fg"
+                  >
+                    <PiX className="h-4 w-4" aria-hidden="true" />
+                    {initialData?.coverImage ? "Keep current" : "Remove"}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ) : (
-          <label className="flex flex-col items-center gap-2 px-4 py-8 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
-            <FaImage className="w-8 h-8 text-slate-300 group-hover:text-blue-400 transition-colors" />
-            <span className="text-sm text-slate-400 group-hover:text-blue-500 transition-colors">
-              Click to upload a cover image
-            </span>
-            <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-          </label>
-        )}
-      </div>
-
-      {/* Published toggle */}
-      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-        <div>
-          <p className="text-sm font-semibold text-slate-700">Publish Status</p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {form.published ? "This blog will be visible to the public." : "This blog is saved as a draft."}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setForm({ ...form, published: !form.published })}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-            form.published
-              ? "bg-green-100 text-green-700 hover:bg-green-200"
-              : "bg-slate-200 text-slate-600 hover:bg-slate-300"
-          }`}
-        >
-          {form.published ? (
-            <><FaGlobe className="w-3.5 h-3.5" /> Published</>
           ) : (
-            <><FaLock className="w-3.5 h-3.5" /> Draft</>
+            <label
+              htmlFor={`${uid}-cover`}
+              className="flex cursor-pointer flex-col items-center gap-2 border border-dashed border-line px-4 py-8 text-subtle transition-colors hover:border-muted hover:text-fg"
+            >
+              <PiImage className="h-8 w-8" aria-hidden="true" />
+              <span className="text-sm">Click to upload a cover image</span>
+            </label>
           )}
-        </button>
-      </div>
+          <input id={`${uid}-cover`} type="file" accept="image/*" className="sr-only" onChange={handleImageChange} />
+        </Field>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-70 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-      >
-        {loading ? "Saving Blog..." : "Save Blog"}
-      </button>
+        <Toggle
+          checked={form.published}
+          onChange={(published) => setForm({ ...form, published })}
+          label={form.published ? "Published" : "Draft"}
+          description={form.published ? "This post is visible to the public." : "Saved as a draft, hidden from the public."}
+        />
+      </fieldset>
+
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        {onCancel && (
+          <Button variant="ghost" onClick={onCancel} disabled={saving}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" variant="primary" loading={saving}>
+          {saving ? "Saving..." : "Save post"}
+        </Button>
+      </div>
     </form>
   );
 };

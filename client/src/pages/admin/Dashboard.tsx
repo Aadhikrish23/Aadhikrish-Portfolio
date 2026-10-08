@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import dashboardApi from "../../APIServices/dashboard.api";
 import StatCard from "../../components/common/StatCard";
+import { Button, Loading, PageHeader } from "../../components/admin/ui";
 
 interface Stats {
   projects: number;
@@ -9,51 +10,47 @@ interface Stats {
 }
 
 const Dashboard = () => {
-  const [stats, setStats] = useState<Stats>({
-    projects: 0,
-    blogs: 0,
-    skills: 0,
-  });
-
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await dashboardApi.getDashboardStats();
-        setStats(data);
-      } finally {
-        setLoading(false);
-      }
+    let cancelled = false;
+    dashboardApi
+      .getDashboardStats()
+      .then((data) => !cancelled && setStats(data))
+      .catch(() => !cancelled && setFailed(true));
+    return () => {
+      cancelled = true;
     };
+  }, [attempt]);
 
-    fetchStats();
-  }, []);
+  const retry = () => {
+    setFailed(false);
+    setAttempt((n) => n + 1);
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Dashboard Overview</h1>
-        <p className="text-slate-500 mt-1">Welcome back. Here is what's happening with your portfolio today.</p>
-      </div>
+    <div className="space-y-10">
+      <PageHeader title="Dashboard" description="What is on your portfolio right now. Pick a card to manage it." />
 
-      {/* STATS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {loading ? (
-          <>
-            <div className="h-32 bg-slate-200/50 rounded-2xl animate-pulse" />
-            <div className="h-32 bg-slate-200/50 rounded-2xl animate-pulse" />
-            <div className="h-32 bg-slate-200/50 rounded-2xl animate-pulse" />
-          </>
-        ) : (
-          <>
-            <StatCard title="Total Projects" value={stats.projects} />
-            <StatCard title="Published Blogs" value={stats.blogs} />
-            <StatCard title="Skills Tracked" value={stats.skills} />
-          </>
-        )}
-      </div>
+      {failed ? (
+        <div className="border border-line bg-surface p-6">
+          <p className="text-fg">Could not load the numbers.</p>
+          <p className="mt-1 text-muted">The server may still be waking up.</p>
+          <Button className="mt-4" onClick={retry}>
+            Try again
+          </Button>
+        </div>
+      ) : !stats ? (
+        <Loading rows={1} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard title="Projects" value={stats.projects} to="/admin/projects" />
+          <StatCard title="Blog posts" value={stats.blogs} to="/admin/blogs" />
+          <StatCard title="Skills" value={stats.skills} to="/admin/skills" />
+        </div>
+      )}
     </div>
   );
 };

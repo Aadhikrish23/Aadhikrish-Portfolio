@@ -1,46 +1,66 @@
 import { NavLink } from "react-router-dom";
-import { FaHome, FaProjectDiagram, FaPenNib, FaCode, FaCog } from "react-icons/fa";
+import { PiArticle, PiGauge, PiSlidersHorizontal, PiSquaresFour, PiWrench, PiX } from "react-icons/pi";
 
-const Sidebar = () => {
-  const navItems = [
-    { name: "Dashboard", path: "/admin", icon: <FaHome /> },
-    { name: "Projects", path: "/admin/projects", icon: <FaProjectDiagram /> },
-    { name: "Blogs", path: "/admin/blogs", icon: <FaPenNib /> },
-    { name: "Skills", path: "/admin/skills", icon: <FaCode /> },
-    { name: "Site Content", path: "/admin/content", icon: <FaCog /> },
-  ];
+const navItems = [
+  { name: "Dashboard", path: "/admin", icon: PiGauge },
+  { name: "Projects", path: "/admin/projects", icon: PiSquaresFour },
+  { name: "Blogs", path: "/admin/blogs", icon: PiArticle },
+  { name: "Skills", path: "/admin/skills", icon: PiWrench },
+  { name: "Site content", path: "/admin/content", icon: PiSlidersHorizontal },
+];
 
+interface Props {
+  open: boolean;
+  onClose: () => void;
+}
+
+const Sidebar = ({ open, onClose }: Props) => {
   return (
-    <div className="w-72 bg-white/70 backdrop-blur-xl border-r border-slate-200/50 p-6 flex flex-col shadow-sm">
-      <div className="mb-10 flex items-center gap-3 px-2">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-          <span className="text-white font-bold text-xl">A</span>
-        </div>
-        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">
-          Admin
-        </h1>
-      </div>
+    <>
+      {open && <div className="fixed inset-0 z-40 bg-black/70 lg:hidden" onClick={onClose} aria-hidden="true" />}
 
-      <nav className="flex flex-col gap-2">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.path}
-            end
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
-                isActive
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1"
-                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 hover:translate-x-1"
-              }`
-            }
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-line bg-canvas px-4 py-6 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="mb-10 flex items-center justify-between px-3">
+          <div>
+            <p className="font-display text-xl font-medium">Aadhi.dev</p>
+            <p className="text-xs uppercase tracking-widest text-subtle">Admin</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close menu"
+            className="p-1.5 text-muted hover:text-fg lg:hidden"
           >
-            <span className="text-lg opacity-80">{item.icon}</span>
-            {item.name}
-          </NavLink>
-        ))}
-      </nav>
-    </div>
+            <PiX className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="flex flex-col gap-1" aria-label="Admin">
+          {navItems.map(({ name, path, icon: Icon }) => (
+            <NavLink
+              key={path}
+              to={path}
+              end
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 border-l-2 px-3 py-2.5 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "border-accent bg-surface text-fg"
+                    : "border-transparent text-muted hover:bg-surface/60 hover:text-fg"
+                }`
+              }
+            >
+              <Icon className="h-5 w-5" aria-hidden="true" />
+              {name}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 };
 

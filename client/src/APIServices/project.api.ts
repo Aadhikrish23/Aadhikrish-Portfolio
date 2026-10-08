@@ -26,9 +26,15 @@ const updateProject = async (
   return res.data;
 };
 
-const deleteProject = async (id: string): Promise<ApiResponse<any>> => {
+// Saves the full display order (first id = first on the site) and returns the fresh list
+const reorderProjects = async (ids: string[]): Promise<ApiResponse<Project[]>> => {
+  const res = await apiClient.put("/projects/reorder", { ids });
+  return res.data;
+};
+
+const deleteProject = async (id: string): Promise<ApiResponse<{ message: string }>> => {
   const res = await apiClient.delete(`/projects/${id}`);
   return res.data;
 };
 
-export default { getProjects ,getProjectBySlug,createProject,updateProject,deleteProject};
+export default { getProjects ,getProjectBySlug,createProject,updateProject,reorderProjects,deleteProject};

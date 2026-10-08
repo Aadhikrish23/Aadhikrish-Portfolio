@@ -8,6 +8,12 @@ const getBlogs = async (): Promise<BlogResponse> => {
   return res.data;
 };
 
+// admin panel only: includes drafts
+const getAdminBlogs = async (): Promise<BlogResponse> => {
+  const res = await apiClient.get("/blogs/admin/all");
+  return res.data;
+};
+
 // get single blog by slug
 const getBlogBySlug = async (slug: string): Promise<{ success: boolean; data: Blog }> => {
   const res = await apiClient.get(`/blogs/${slug}`);
@@ -32,4 +38,4 @@ const deleteBlog = async (id: string) => {
   return res.data;
 };
 
-export default { getBlogs, createBlog, updateBlog, deleteBlog,getBlogBySlug };
+export default { getBlogs, getAdminBlogs, createBlog, updateBlog, deleteBlog,getBlogBySlug };

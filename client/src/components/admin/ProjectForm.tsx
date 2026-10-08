@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import type { Project } from "../../types/project.types";
+import { useEffect, useMemo, useState } from "react";
+import { PiGithubLogo, PiImage, PiLink } from "react-icons/pi";
 import skillsApi from "../../APIServices/skills.api";
+import TintedIcon from "../common/TintedIcon";
+import { Button, Field, Toggle, fieldClass } from "./ui";
+import type { Project } from "../../types/project.types";
 import type { Skill } from "../../types/skills.types";
-import SkillIcon from "../common/SkillIcon";
-import { FaImage, FaCheck, FaGithub, FaExternalLinkAlt } from "react-icons/fa";
 
 interface Props {
   initialData?: Partial<Project>;
@@ -11,6 +12,7 @@ interface Props {
   loading: boolean;
 }
 
+// The API stores one description string; the form edits it as four parts and rebuilds it on save.
 const parseDescription = (desc: string) => {
   const lines = desc.split("\n");
   let description = "";
@@ -33,278 +35,253 @@ const parseDescription = (desc: string) => {
   return { description: description.trim(), problem, solution, features: features.join(", ") };
 };
 
-const ProjectForm = ({ initialData, onSubmit, loading }: Props) => {
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    problem: "",
-    solution: "",
-    features: "",
-    techStack: [] as string[],
-    githubUrl: "",
-    liveUrl: "",
-    featured: false,
-  });
+const buildDescription = (form: { description: string; problem: string; solution: string; features: string }) =>
+  `${form.description}\n\nProblem: ${form.problem}\n\nSolution: ${form.solution}\n\nKey Features:\n${form.features
+    .split(",")
+    .map((f) => f.trim())
+    .filter(Boolean)
+    .map((f) => `• ${f}`)
+    .join("\n")}`.trim();
 
+const initialForm = (data?: Partial<Project>) => {
+  const parsed = data?.description
+    ? parseDescription(data.description)
+    : { description: "", problem: "", solution: "", features: "" };
+  return {
+    title: data?.title ?? "",
+    techStack: data?.techStack ?? [],
+    githubUrl: data?.githubUrl ?? "",
+    liveUrl: data?.liveUrl ?? "",
+    featured: data?.featured ?? false,
+    ...parsed,
+  };
+};
+
+// Remount with a new `key` per project (the parent does) so the form always starts from its data.
+const ProjectForm = ({ initialData, onSubmit, loading }: Props) => {
+  const [form, setForm] = useState(() => initialForm(initialData));
   const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    skillsApi.getSkills().then((res) => setAvailableSkills(res.data)).catch(() => {});
+    skillsApi
+      .getSkills()
+      .then((res) => setAvailableSkills(res.data))
+      .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (initialData) {
-      const parsed = initialData.description
-        ? parseDescription(initialData.description)
-        : { description: "", problem: "", solution: "", features: "" };
+  // Local preview of a newly chosen file; revoked when replaced or when the form closes
+  const newPreview = useMemo(() => (image ? URL.createObjectURL(image) : null), [image]);
+  useEffect(() => () => {
+    if (newPreview) URL.revokeObjectURL(newPreview);
+  }, [newPreview]);
+  const preview = newPreview ?? initialData?.image ?? null;
 
-      setForm({
-        title: initialData.title || "",
-        techStack: initialData.techStack || [],
-        githubUrl: initialData.githubUrl || "",
-        liveUrl: initialData.liveUrl || "",
-        featured: initialData.featured || false,
-        description: parsed.description,
-        problem: parsed.problem,
-        solution: parsed.solution,
-        features: parsed.features,
-      });
+  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => setForm((f) => ({ ...f, [key]: value }));
+  const onText = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    set(e.target.name as "title", e.target.value);
 
-      if (initialData.image) setImagePreview(initialData.image);
-    }
-  }, [initialData]);
+  const toggleTech = (name: string) =>
+    set("techStack", form.techStack.includes(name) ? form.techStack.filter((s) => s !== name) : [...form.techStack, name]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    setForm({ ...form, [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value });
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setImage(file);
-    if (file) setImagePreview(URL.createObjectURL(file));
-  };
-
-  const toggleSkill = (name: string) => {
-    setForm((prev) => ({
-      ...prev,
-      techStack: prev.techStack.includes(name)
-        ? prev.techStack.filter((s) => s !== name)
-        : [...prev.techStack, name],
-    }));
-  };
-
-  const buildDescription = () =>
-    `${form.description}\n\nProblem: ${form.problem}\n\nSolution: ${form.solution}\n\nKey Features:\n${form.features
-      .split(",")
-      .map((f) => `• ${f.trim()}`)
-      .join("\n")}`.trim();
+  // Selected names that no longer exist as skills stay visible, so they can be unselected
+  const techOptions = useMemo(() => {
+    const known = new Set(availableSkills.map((s) => s.name));
+    const orphans = form.techStack.filter((name) => !known.has(name));
+    return [...availableSkills.map((s) => ({ name: s.name, iconUrl: s.iconUrl })), ...orphans.map((name) => ({ name, iconUrl: undefined }))];
+  }, [availableSkills, form.techStack]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
+    if (form.title.trim().length < 3) return setError("Give the project a title of at least 3 characters.");
+    if (form.techStack.length === 0) return setError("Pick at least one technology.");
+    if (buildDescription(form).length < 10) return setError("Add a short description.");
+    setError("");
+
     const fd = new FormData();
-    fd.append("title", form.title);
-    fd.append("description", buildDescription());
+    fd.append("title", form.title.trim());
+    fd.append("description", buildDescription(form));
     fd.append("techStack", form.techStack.join(","));
-    fd.append("githubUrl", form.githubUrl);
-    fd.append("liveUrl", form.liveUrl);
+    // Empty strings are sent on purpose: the server treats them as "remove this link"
+    fd.append("githubUrl", form.githubUrl.trim());
+    fd.append("liveUrl", form.liveUrl.trim());
     fd.append("featured", String(form.featured));
     if (image) fd.append("image", image);
     await onSubmit(fd);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-
-      {/* Title */}
-      <div className="space-y-1">
-        <label className="block text-sm font-semibold text-slate-700">Project Title</label>
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+      <Field label="Title" htmlFor="p-title">
         <input
+          id="p-title"
           name="title"
-          placeholder="e.g. E-Commerce Platform"
           value={form.title}
-          onChange={handleChange}
+          onChange={onText}
+          placeholder="e.g. SnapBridge"
           required
-          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
+          className={fieldClass}
         />
-      </div>
+      </Field>
 
-      {/* Description */}
-      <div className="space-y-1">
-        <label className="block text-sm font-semibold text-slate-700">Short Description</label>
+      <Field label="Overview" htmlFor="p-desc" hint="Shown on the project cards">
         <textarea
+          id="p-desc"
           name="description"
-          placeholder="Brief overview of the project..."
           value={form.description}
-          onChange={handleChange}
+          onChange={onText}
           rows={3}
-          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 resize-none"
+          placeholder="One or two sentences on what it is and who it is for."
+          className={`${fieldClass} resize-y`}
         />
-      </div>
+      </Field>
 
-      {/* Problem / Solution in 2 cols */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="block text-sm font-semibold text-slate-700">Problem</label>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Problem" htmlFor="p-problem">
           <textarea
+            id="p-problem"
             name="problem"
-            placeholder="What problem did you solve?"
             value={form.problem}
-            onChange={handleChange}
-            rows={3}
-            className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 resize-none"
+            onChange={onText}
+            rows={4}
+            placeholder="What was broken or missing?"
+            className={`${fieldClass} resize-y`}
           />
-        </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-semibold text-slate-700">Solution</label>
+        </Field>
+        <Field label="Solution" htmlFor="p-solution">
           <textarea
+            id="p-solution"
             name="solution"
-            placeholder="How did you solve it?"
             value={form.solution}
-            onChange={handleChange}
-            rows={3}
-            className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 resize-none"
+            onChange={onText}
+            rows={4}
+            placeholder="What did you build?"
+            className={`${fieldClass} resize-y`}
           />
-        </div>
+        </Field>
       </div>
 
-      {/* Features */}
-      <div className="space-y-1">
-        <label className="block text-sm font-semibold text-slate-700">
-          Key Features{" "}
-          <span className="text-xs font-normal text-slate-400">comma separated</span>
-        </label>
+      <Field label="Key features" htmlFor="p-features" hint="Comma separated">
         <input
+          id="p-features"
           name="features"
-          placeholder="User Auth, Real-time Chat, Payment Gateway..."
           value={form.features}
-          onChange={handleChange}
-          className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
+          onChange={onText}
+          placeholder="Offline sync, QR pairing, folder transfer"
+          className={fieldClass}
         />
-      </div>
+      </Field>
 
-      {/* Tech Stack Badge Picker */}
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-700">Tech Stack</label>
-        {availableSkills.length === 0 ? (
-          <p className="text-sm text-slate-400 italic">
-            No skills added yet — go to the Skills tab and add some first.
+      <fieldset>
+        <legend className="mb-1.5 block text-sm font-medium text-fg">
+          Tech stack <span className="ml-2 font-normal text-subtle">{form.techStack.length} selected</span>
+        </legend>
+        {techOptions.length === 0 ? (
+          <p className="border border-dashed border-line p-4 text-muted">
+            No skills yet. Add some on the Skills page first, then pick them here.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 min-h-[60px]">
-            {availableSkills.map((skill) => {
-              const selected = form.techStack.includes(skill.name);
+          <div className="flex flex-wrap gap-2 border border-line bg-surface p-3">
+            {techOptions.map(({ name, iconUrl }) => {
+              const selected = form.techStack.includes(name);
               return (
                 <button
-                  key={skill._id || skill.name}
+                  key={name}
                   type="button"
-                  onClick={() => toggleSkill(skill.name)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition-all duration-200 select-none
-                    ${selected
-                      ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200 scale-105"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                    }`}
+                  aria-pressed={selected}
+                  onClick={() => toggleTech(name)}
+                  className={`group inline-flex items-center gap-2 border px-3 py-1.5 text-sm transition-colors ${
+                    selected
+                      ? "border-accent bg-accent/20 text-fg"
+                      : "border-line text-muted hover:border-muted hover:text-fg"
+                  }`}
                 >
-                  <SkillIcon
-                    name={skill.name}
-                    iconUrl={skill.iconUrl}
-                    className={`w-4 h-4 rounded-sm ${selected ? "brightness-0 invert" : ""}`}
-                  />
-                  {skill.name}
-                  {selected && <FaCheck className="w-3 h-3 ml-0.5" />}
+                  <TintedIcon name={name} iconUrl={iconUrl} className="h-4 w-4" />
+                  {name}
                 </button>
               );
             })}
           </div>
         )}
-        {form.techStack.length > 0 && (
-          <p className="text-xs text-slate-500 mt-1">
-            Selected: {form.techStack.join(", ")}
-          </p>
-        )}
-      </div>
+      </fieldset>
 
-      {/* GitHub + Live URL */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-            <FaGithub className="w-4 h-4" /> GitHub URL
-          </label>
-          <input
-            name="githubUrl"
-            placeholder="https://github.com/..."
-            value={form.githubUrl}
-            onChange={handleChange}
-            className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-            <FaExternalLinkAlt className="w-3.5 h-3.5" /> Live URL
-          </label>
-          <input
-            name="liveUrl"
-            placeholder="https://..."
-            value={form.liveUrl}
-            onChange={handleChange}
-            className="w-full border border-slate-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
-          />
-        </div>
-      </div>
-
-      {/* Project Image */}
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-700">Project Screenshot</label>
-        {imagePreview ? (
-          <div className="relative rounded-xl overflow-hidden border border-slate-200 group">
-            <img src={imagePreview} alt="Preview" className="w-full h-44 object-cover" />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <label className="cursor-pointer px-4 py-2 bg-white/90 rounded-lg text-sm font-medium text-slate-700 hover:bg-white transition-colors">
-                Change Image
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
-            </div>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="GitHub" htmlFor="p-github" hint="Optional">
+          <div className="relative">
+            <PiGithubLogo className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-subtle" aria-hidden="true" />
+            <input
+              id="p-github"
+              name="githubUrl"
+              type="url"
+              value={form.githubUrl}
+              onChange={onText}
+              placeholder="https://github.com/you/repo"
+              className={`${fieldClass} pl-10`}
+            />
           </div>
-        ) : (
-          <label className="flex flex-col items-center gap-2 px-4 py-8 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
-            <FaImage className="w-8 h-8 text-slate-300 group-hover:text-blue-400 transition-colors" />
-            <span className="text-sm text-slate-400 group-hover:text-blue-500 transition-colors">
-              Click to upload a project screenshot
+        </Field>
+        <Field label="Live site" htmlFor="p-live" hint="Optional">
+          <div className="relative">
+            <PiLink className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-subtle" aria-hidden="true" />
+            <input
+              id="p-live"
+              name="liveUrl"
+              type="url"
+              value={form.liveUrl}
+              onChange={onText}
+              placeholder="https://"
+              className={`${fieldClass} pl-10`}
+            />
+          </div>
+        </Field>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-fg">
+          Screenshot <span className="ml-2 font-normal text-subtle">Shown whole, never cropped</span>
+        </p>
+        <label className="group block cursor-pointer border border-dashed border-line transition-colors hover:border-muted focus-within:border-muted">
+          {preview ? (
+            <div className="relative bg-surface">
+              <img src={preview} alt="Screenshot preview" className="mx-auto block max-h-64 w-auto max-w-full object-contain" />
+              <span className="absolute bottom-3 right-3 bg-canvas/90 px-3 py-1.5 text-sm text-fg">Replace image</span>
+            </div>
+          ) : (
+            <span className="flex flex-col items-center gap-2 px-4 py-10 text-muted">
+              <PiImage className="h-8 w-8 text-subtle" aria-hidden="true" />
+              Choose a screenshot
             </span>
-            <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-          </label>
-        )}
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => setImage(e.target.files?.[0] ?? null)}
+          />
+        </label>
       </div>
 
-      {/* Featured Toggle */}
-      <div
-        onClick={() => setForm((f) => ({ ...f, featured: !f.featured }))}
-        className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
-          form.featured
-            ? "bg-amber-50 border-amber-300"
-            : "bg-slate-50 border-slate-200 hover:border-slate-300"
-        }`}
-      >
-        <div>
-          <p className="text-sm font-semibold text-slate-700">Featured Project</p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {form.featured ? "This project will be highlighted on your homepage." : "Not shown on homepage."}
-          </p>
-        </div>
-        <div className={`w-10 h-6 rounded-full relative transition-all ${form.featured ? "bg-amber-400" : "bg-slate-300"}`}>
-          <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${form.featured ? "left-4.5 translate-x-0.5" : "left-0.5"}`} />
-        </div>
-      </div>
+      <Toggle
+        checked={form.featured}
+        onChange={(next) => set("featured", next)}
+        label="Show on the home page"
+        description={form.featured ? "Appears in the home page Projects section." : "Only listed on the Projects page."}
+      />
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-70 text-white font-bold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-      >
-        {loading ? "Saving Project..." : "Save Project"}
-      </button>
+      {error && (
+        <p role="alert" className="border border-red-400/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </p>
+      )}
+
+      <div className="flex justify-end border-t border-line pt-5">
+        <Button type="submit" variant="primary" loading={loading} className="min-w-36">
+          {loading ? "Saving" : "Save project"}
+        </Button>
+      </div>
     </form>
   );
 };
