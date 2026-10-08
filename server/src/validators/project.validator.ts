@@ -10,4 +10,12 @@ export const createProjectSchema = z.object({
   featured: z.boolean().optional(),
 });
 
-export const updateProjectSchema = createProjectSchema.partial();
+export const updateProjectSchema = createProjectSchema.partial().extend({
+  // null clears the link
+  githubUrl: z.string().url().nullable().optional(),
+  liveUrl: z.string().url().nullable().optional(),
+});
+
+export const reorderProjectsSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+});

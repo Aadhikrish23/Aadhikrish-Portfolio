@@ -7,7 +7,10 @@ import upload from "../middlewares/upload.middleware.js";
 const router = express.Router();
 
 // public
-router.get("/", optionalAuth, blogController.getBlogs);
+// The public list is published-only for everyone, even a logged-in admin browsing the site
+router.get("/", blogController.getBlogs);
+// Admin panel list: drafts included. Declared before "/:slug" so "admin" is not read as a slug.
+router.get("/admin/all", authMiddleware, blogController.getAdminBlogs);
 router.get("/:slug", optionalAuth, blogController.getBlog);
 
 // protected

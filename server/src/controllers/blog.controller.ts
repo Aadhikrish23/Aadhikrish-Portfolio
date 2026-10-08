@@ -26,7 +26,20 @@ export const getBlogs = async (
   next: NextFunction,
 ) => {
   try {
-    const data = await blogServices.getBlogs(!!req.user);
+    const data = await blogServices.getBlogs(false);
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminBlogs = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await blogServices.getBlogs(true);
     res.json({ success: true, data });
   } catch (error) {
     next(error);

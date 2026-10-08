@@ -9,6 +9,7 @@ export interface IProject extends Document {
   liveUrl?: string;
   image?: string;
   featured: boolean;
+  order?: number;
 }
 
 const projectSchema = new mongoose.Schema<IProject>(
@@ -37,6 +38,8 @@ const projectSchema = new mongoose.Schema<IProject>(
       type: Boolean,
       default: false,
     },
+    // Manual display position (lowest first). Set from the admin panel.
+    order: Number,
   },
   { timestamps: true }
 );

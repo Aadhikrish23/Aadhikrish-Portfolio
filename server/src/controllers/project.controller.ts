@@ -3,6 +3,7 @@ import projectServices from "../services/project.services";
 import AppError from "../utils/AppError";
 import {
   createProjectSchema,
+  reorderProjectsSchema,
   updateProjectSchema,
 } from "../validators/project.validator";
 export const createProject = async (
@@ -91,8 +92,9 @@ export const updateProject = async (
           ? req.body.featured === "true"
           : undefined,
 
-      githubUrl: req.body.githubUrl || undefined,
-      liveUrl: req.body.liveUrl || undefined,
+      // "" means the owner cleared the field: null removes the stored link
+      githubUrl: req.body.githubUrl === undefined ? undefined : req.body.githubUrl || null,
+      liveUrl: req.body.liveUrl === undefined ? undefined : req.body.liveUrl || null,
     };
     const parsed = updateProjectSchema.safeParse(parsedBody);
 
@@ -121,6 +123,24 @@ export const deleteProject = async (
       throw new AppError("Invalid id", 400);
     }
     const data = await projectServices.deleteProject(id);
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const reorderProjects = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const parsed = reorderProjectsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new AppError(parsed.error.message, 400);
+    }
+    const data = await projectServices.reorderProjects(parsed.data.ids);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
